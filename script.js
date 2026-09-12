@@ -48,7 +48,7 @@ function updatePublicationDetails(lang){
     item.innerHTML=`<span class="citation-index">[${items.indexOf(item)+1}]</span><span class="citation-text">${citationBody} <span class="pub-metrics">${metrics}</span></span>`;
     list.append(item);
   });
-  const note=document.querySelector('#publications .section-note'); const marker=lang==='en'?'* Corresponding author':'* 通讯作者'; if(!document.querySelector('.corresponding-note')){const p=document.createElement('p');p.className='corresponding-note';note.after(p)} document.querySelector('.corresponding-note').textContent=marker;
+const marker=lang==='en'?'* Corresponding author':'* 通讯作者'; let markerEl=document.querySelector('.corresponding-note'); if(!markerEl){markerEl=document.createElement('p');markerEl.className='corresponding-note'} markerEl.textContent=marker; list.after(markerEl);
 }
 function toIEEEName(name){
   const parts=name.trim().split(/\s+/), surname=parts.pop(), initials=parts.join(' ').split(/\s+/).filter(Boolean).map(part=>part.includes('-')?`${part.split('-')[0][0]}.-${part.split('-')[1][0]}.`:`${part[0]}.`).join(' ');
