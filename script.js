@@ -29,17 +29,31 @@ const publicationDetails=[
   ['Ge Guo and Jiageng Liu','IEEE Transactions on Instrumentation and Measurement, vol. 71, article 8500810, 2022','IF 7.0; JCR Q1'],
   ['Jiageng Liu and Ge Guo','IEEE Transactions on Instrumentation and Measurement, vol. 70, 2021','IF 7.0; JCR Q1']
 ];
+const publicationRoles=['corresponding','third','third','third','corresponding','second','first','third','corresponding','third','corresponding','first','second','first'];
 function updatePublicationDetails(lang){
-  document.querySelectorAll('#publications .publication-list > li').forEach((item,i)=>{
-    const [authors,details,metrics]=publicationDetails[i]||[]; if(!authors)return;
+  const list=document.querySelector('#publications .publication-list');
+  const items=[...list.querySelectorAll(':scope > li:not(.pub-group-title)')];
+  items.forEach((item,i)=>{if(!item.dataset.pubIndex)item.dataset.pubIndex=String(i)});
+  const roleOrder=['first','corresponding','second','third','other'];
+  const roleLabels=lang==='en'?{first:'First-author papers',corresponding:'Corresponding-author papers',second:'Second-author papers',third:'Third-author papers',other:'Other papers'}:{first:'第一作者论文',corresponding:'通讯作者论文',second:'第二作者论文',third:'第三作者论文',other:'其他作者论文'};
+  items.sort((a,b)=>roleOrder.indexOf(publicationRoles[Number(a.dataset.pubIndex)])-roleOrder.indexOf(publicationRoles[Number(b.dataset.pubIndex)]));
+  list.querySelectorAll('.pub-group-title').forEach(item=>item.remove());
+  let currentRole='';
+  items.forEach(item=>{
+    const i=Number(item.dataset.pubIndex); const [authors,details,metrics]=publicationDetails[i]||[]; if(!authors)return;
+    const role=publicationRoles[i]||'other';
+    if(role!==currentRole){const heading=document.createElement('li');heading.className='pub-group-title';heading.textContent=roleLabels[role];list.append(heading);currentRole=role}
     let authorEl=item.querySelector('.pub-authors'), detailEl=item.querySelector('.pub-details'), metricEl=item.querySelector('.pub-metrics');
     if(!authorEl){authorEl=document.createElement('small');authorEl.className='pub-authors';item.append(authorEl)}
     if(!detailEl){detailEl=document.createElement('small');detailEl.className='pub-details';item.append(detailEl)}
     if(!metricEl){metricEl=document.createElement('small');metricEl.className='pub-metrics';item.append(metricEl)}
-    authorEl.textContent=`${lang==='en'?'Authors: ':'作者：'}${authors}`;
+    const markedAuthors=authors.replaceAll('Jiageng Liu',`<strong>Jiageng Liu</strong>${role==='corresponding'?'*':''}`);
+    authorEl.innerHTML=`${lang==='en'?'Authors: ':'作者：'}${markedAuthors}`;
     detailEl.textContent=`${lang==='en'?'Journal details: ':'期刊信息：'}${details}`;
     metricEl.textContent=metrics;
+    list.append(item);
   });
+  const note=document.querySelector('#publications .section-note'); const marker=lang==='en'?'* Corresponding author':'* 通讯作者'; if(!document.querySelector('.corresponding-note')){const p=document.createElement('p');p.className='corresponding-note';note.after(p)} document.querySelector('.corresponding-note').textContent=marker;
 }
 function setList(selector,items){document.querySelector(selector).innerHTML=items.map(item=>`<li>${item}</li>`).join('')}
 function setLanguage(lang){
