@@ -24,10 +24,10 @@ const publicationDetails=[
   ['Ende Wang, Ziyao Chen, Jiageng Liu, and Boxuan Sun','Results in Engineering, vol. 28, article 108261, 2025','IF 7.9; JCR Q1 (2025 JCR, released 2026)'],
   ['Meihong Zhao, Zhengxiao Han, Ende Wang, and Jiageng Liu','Scientific Reports, vol. 16, article 2897, 2026','IF 4.9; JCR Q1 (2025 JCR, released 2026)'],
   ['Ge Guo, Xiaozheng Sun, and Jiageng Liu','IEEE Transactions on Vehicular Technology, vol. 73, no. 11, 2024','IF 7.5; JCR Q1 (2025 JCR, released 2026)'],
-  ['Ge Guo, Jiageng Liu, and Xiaozheng Sun','IEEE Transactions on Vehicular Technology, vol. 72, no. 8, 2023','IF 7.1; JCR Q1 (2024)'],
-  ['Jiageng Liu, Ge Guo, and Renyongkang Zhang','IEEE Transactions on Vehicular Technology, vol. 72, no. 5, 2023','IF 7.1; JCR Q1 (2024)'],
-  ['Ge Guo and Jiageng Liu','IEEE Transactions on Instrumentation and Measurement, vol. 71, article 8500810, 2022','IF 5.9; JCR Q1 (2024)'],
-  ['Jiageng Liu and Ge Guo','IEEE Transactions on Instrumentation and Measurement, vol. 70, 2021','IF 5.9; JCR Q1 (2024)']
+  ['Ge Guo, Jiageng Liu, and Xiaozheng Sun','IEEE Transactions on Vehicular Technology, vol. 72, no. 8, 2023','IF 7.5; JCR Q1 (2025 JCR, released 2026)'],
+  ['Jiageng Liu, Ge Guo, and Renyongkang Zhang','IEEE Transactions on Vehicular Technology, vol. 72, no. 5, 2023','IF 7.5; JCR Q1 (2025 JCR, released 2026)'],
+  ['Ge Guo and Jiageng Liu','IEEE Transactions on Instrumentation and Measurement, vol. 71, article 8500810, 2022','IF 7.0; JCR Q1 (2025 JCR, released 2026)'],
+  ['Jiageng Liu and Ge Guo','IEEE Transactions on Instrumentation and Measurement, vol. 70, 2021','IF 7.0; JCR Q1 (2025 JCR, released 2026)']
 ];
 function updatePublicationDetails(lang){
   document.querySelectorAll('#publications .publication-list > li').forEach((item,i)=>{
