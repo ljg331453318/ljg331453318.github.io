@@ -35,14 +35,11 @@ function updatePublicationDetails(lang){
   const items=[...list.querySelectorAll(':scope > li:not(.pub-group-title)')];
   items.forEach((item,i)=>{if(!item.dataset.pubIndex)item.dataset.pubIndex=String(i)});
   const roleOrder=['first','corresponding','second','third','other'];
-  const roleLabels=lang==='en'?{first:'First-author papers',corresponding:'Corresponding-author papers',second:'Second-author papers',third:'Third-author papers',other:'Other papers'}:{first:'第一作者论文',corresponding:'通讯作者论文',second:'第二作者论文',third:'第三作者论文',other:'其他作者论文'};
   items.sort((a,b)=>roleOrder.indexOf(publicationRoles[Number(a.dataset.pubIndex)])-roleOrder.indexOf(publicationRoles[Number(b.dataset.pubIndex)]));
   list.querySelectorAll('.pub-group-title').forEach(item=>item.remove());
-  let currentRole='';
   items.forEach(item=>{
     const i=Number(item.dataset.pubIndex); const [authors,details,metrics]=publicationDetails[i]||[]; if(!authors)return;
     const role=publicationRoles[i]||'other';
-    if(role!==currentRole){const heading=document.createElement('li');heading.className='pub-group-title';heading.textContent=roleLabels[role];list.append(heading);currentRole=role}
     let authorEl=item.querySelector('.pub-authors'), detailEl=item.querySelector('.pub-details'), metricEl=item.querySelector('.pub-metrics');
     if(!authorEl){authorEl=document.createElement('small');authorEl.className='pub-authors';item.append(authorEl)}
     if(!detailEl){detailEl=document.createElement('small');detailEl.className='pub-details';item.append(detailEl)}
