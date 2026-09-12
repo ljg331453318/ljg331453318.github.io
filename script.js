@@ -24,14 +24,13 @@ const publicationDetails=[
   ['Yaodong Wei, Jiageng Liu, Kejuan Xue, and Ende Wang','Defence Technology, 2026','IF 5.9; JCR Q1'],
   ['Jiageng Liu, Ge Guo, Xiaozheng Sun, Zengbo Li, and Haodong Lin','IEEE Transactions on Vehicular Technology, vol. 74, no. 4, 2025','IF 7.5; JCR Q1'],
   ['Ende Wang, Ziyao Chen, Jiageng Liu, and Boxuan Sun','Results in Engineering, vol. 28, article 108261, 2025','IF 7.9; JCR Q1'],
-  ['Meihong Zhao, Zhengxiao Han, Ende Wang, and Jiageng Liu','Scientific Reports, vol. 16, article 2897, 2026','IF 4.9; JCR Q1'],
   ['Ge Guo, Xiaozheng Sun, and Jiageng Liu','IEEE Transactions on Vehicular Technology, vol. 73, no. 11, 2024','IF 7.5; JCR Q1'],
   ['Ge Guo, Jiageng Liu, and Xiaozheng Sun','IEEE Transactions on Vehicular Technology, vol. 72, no. 8, 2023','IF 7.5; JCR Q1'],
   ['Jiageng Liu, Ge Guo, and Renyongkang Zhang','IEEE Transactions on Vehicular Technology, vol. 72, no. 5, 2023','IF 7.5; JCR Q1'],
   ['Ge Guo and Jiageng Liu','IEEE Transactions on Instrumentation and Measurement, vol. 71, article 8500810, 2022','IF 7.0; JCR Q1'],
   ['Jiageng Liu and Ge Guo','IEEE Transactions on Instrumentation and Measurement, vol. 70, 2021','IF 7.0; JCR Q1']
 ];
-const publicationRoles=['corresponding','third','third','third','corresponding','second','first','third','corresponding','third','corresponding','first','second','first'];
+const publicationRoles=['corresponding','third','third','third','corresponding','second','first','third','third','corresponding','first','second','first'];
 function updatePublicationDetails(lang){
   const list=document.querySelector('#publications .publication-list');
   const items=[...list.querySelectorAll(':scope > li')];
