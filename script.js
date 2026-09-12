@@ -39,17 +39,19 @@ function updatePublicationDetails(lang){
   items.forEach(item=>{
     const i=Number(item.dataset.pubIndex); const [authors,details,metrics]=publicationDetails[i]||[]; if(!authors)return;
     const role=publicationRoles[i]||'other';
-    let authorEl=item.querySelector('.pub-authors'), detailEl=item.querySelector('.pub-details'), metricEl=item.querySelector('.pub-metrics');
-    if(!authorEl){authorEl=document.createElement('small');authorEl.className='pub-authors';item.append(authorEl)}
-    if(!detailEl){detailEl=document.createElement('small');detailEl.className='pub-details';item.append(detailEl)}
-    if(!metricEl){metricEl=document.createElement('small');metricEl.className='pub-metrics';item.append(metricEl)}
-    const markedAuthors=authors.replaceAll('Jiageng Liu',`<strong>Jiageng Liu</strong>${role==='corresponding'?'*':''}`);
-    authorEl.innerHTML=`${lang==='en'?'Authors: ':'作者：'}${markedAuthors}`;
-    detailEl.textContent=`${lang==='en'?'Journal details: ':'期刊信息：'}${details}`;
-    metricEl.textContent=metrics;
+    if(!item.dataset.title){item.dataset.title=item.querySelector('a')?.textContent||'';item.dataset.href=item.querySelector('a')?.href||'#';item.dataset.venue=item.querySelector('.pub-venue')?.textContent||''}
+    const title=item.dataset.title, href=item.dataset.href, venue=item.dataset.venue, rest=details.replace(`${venue}, `,'');
+    const names=authors.replace(/, and | and /g,', ').split(', ');
+    const markedNames=names.map(name=>name==='Jiageng Liu'?`<strong>${lang==='en'?'J. Liu':'Jiageng Liu'}</strong>${role==='corresponding'?'*':''}`:lang==='en'?toIEEEName(name):name);
+    const authorText=lang==='en'?(markedNames.length>1?`${markedNames.slice(0,-1).join(', ')}, and ${markedNames.at(-1)}`:markedNames[0]):markedNames.join('，');
+    item.innerHTML=`<span class="citation-index">[${items.indexOf(item)+1}]</span><span class="citation-text">${authorText}. <a href="${href}" target="_blank" rel="noopener">${title}</a>${lang==='en'?',':' [J].'} ${venue}, ${rest}. <span class="pub-metrics">${metrics}</span></span>`;
     list.append(item);
   });
   const note=document.querySelector('#publications .section-note'); const marker=lang==='en'?'* Corresponding author':'* 通讯作者'; if(!document.querySelector('.corresponding-note')){const p=document.createElement('p');p.className='corresponding-note';note.after(p)} document.querySelector('.corresponding-note').textContent=marker;
+}
+function toIEEEName(name){
+  const parts=name.trim().split(/\s+/), surname=parts.pop(), initials=parts.join(' ').split(/[- ]/).filter(Boolean).map(part=>`${part[0]}.`).join('');
+  return `${initials} ${surname}`;
 }
 function setList(selector,items){document.querySelector(selector).innerHTML=items.map(item=>`<li>${item}</li>`).join('')}
 function setLanguage(lang){
