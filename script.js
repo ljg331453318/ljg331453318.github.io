@@ -1,32 +1,34 @@
-const menuButton = document.querySelector('.menu-button');
-const mobileNav = document.querySelector('.side-nav');
-const sidebar = document.querySelector('.sidebar');
-const links = [...document.querySelectorAll('.nav-link')];
+const toggle=document.querySelector('.mobile-toggle');
+const sidebar=document.querySelector('.sidebar');
+toggle?.addEventListener('click',()=>{const open=toggle.getAttribute('aria-expanded')==='true';toggle.setAttribute('aria-expanded',String(!open));sidebar?.classList.toggle('open',!open)});
+document.querySelectorAll('.sidebar a').forEach(link=>link.addEventListener('click',()=>{sidebar?.classList.remove('open');toggle?.setAttribute('aria-expanded','false')}));
 
-menuButton?.addEventListener('click', () => {
-  const open = menuButton.getAttribute('aria-expanded') === 'true';
-  menuButton.setAttribute('aria-expanded', String(!open));
-  mobileNav?.classList.toggle('open', !open);
-  sidebar?.classList.toggle('nav-open', !open);
-});
-
-links.forEach((link) => link.addEventListener('click', () => {
-  links.forEach((item) => item.classList.remove('active'));
-  link.classList.add('active');
-  mobileNav?.classList.remove('open');
-  sidebar?.classList.remove('nav-open');
-  menuButton?.setAttribute('aria-expanded', 'false');
-}));
-
-const sections = [...document.querySelectorAll('main section[id]')];
-const observer = new IntersectionObserver((entries) => {
-  entries.forEach((entry) => {
-    if (!entry.isIntersecting) return;
-    links.forEach((link) => link.classList.toggle('active', link.getAttribute('href') === `#${entry.target.id}`));
-  });
-}, { rootMargin: '-35% 0px -55% 0px' });
-sections.forEach((section) => observer.observe(section));
-
-document.querySelectorAll('.publication[href="#"]').forEach((item) => {
-  item.addEventListener('click', (event) => event.preventDefault());
-});
+const translations={
+  zh:{site:'刘佳庚',title:'副教授 刘佳庚',navHome:'主页',navContact:'联系方式',navBio:'个人简介',navResearch:'研究方向',navPubs:'论文成果',navPatents:'发明专利',navTeaching:'课程介绍',navServiceGroup:'学术兼职',navService:'学术兼职',profile:'博士研究生，副教授、硕士生导师<br />电气工程师，电工高级技师，心理咨询师',profileSchool:'沈阳理工大学 装备工程学院<br />信息对抗专业专任教师',bioTitle:'个人简介',researchTitle:'研究方向',teachingTitle:'课程介绍',undergrad:'本科生课程',grad:'研究生课程',pubTitle:'论文成果',pubNote:'论文清单（点击标题进入论文网页）',patentTitle:'发明专利',patentNote:'已授权发明专利（点击标题进入公开网页）',serviceTitle:'学术兼职',contactTitle:'联系方式',address:'沈阳理工大学 装备工程学院<br />辽宁省沈阳市浑南区南屏中路 6 号',email:'联系邮箱：',footer:'© 刘佳庚 · Shenyang Ligong University'},
+  en:{site:'Jiageng Liu',title:'Associate Professor Jiageng Liu',navHome:'Home',navContact:'Contact',navBio:'Biography',navResearch:'Research Areas',navPubs:'Publications',navPatents:'Patents',navTeaching:'Teaching',navServiceGroup:'Academic Appointments',navService:'Academic Appointments',profile:'Ph.D. Candidate, Associate Professor, Master’s Supervisor<br />Electrical Engineer, Senior Electrical Technician, Psychological Counselor',profileSchool:'School of Equipment Engineering, Shenyang Ligong University<br />Full-time Faculty, Information Confrontation',bioTitle:'Biography',researchTitle:'Research Areas',teachingTitle:'Teaching',undergrad:'Undergraduate Courses',grad:'Graduate Course',pubTitle:'Publications',pubNote:'Selected publications (click a title to open the article webpage)',patentTitle:'Patents',patentNote:'Granted invention patents (click a title to open the public webpage)',serviceTitle:'Academic Appointments',contactTitle:'Contact',address:'School of Equipment Engineering, Shenyang Ligong University<br />Shenyang, Liaoning, China',email:'Email: ',footer:'© Jiageng Liu · Shenyang Ligong University'}
+};
+const researchZh=['多传感器信息融合与组合导航理论','陆地车辆定位、运动状态估计与智能交通系统','智能车辆协同定位、目标跟踪与自主感知','信息对抗、定位完好性与故障/攻击检测','数学物理中的逆问题与非线性动力学'];
+const researchEn=['Multi-sensor information fusion and integrated navigation theory','Land vehicle localization, motion-state estimation, and intelligent transportation systems','Cooperative localization, target tracking, and autonomous perception for intelligent vehicles','Information confrontation, localization integrity, and fault/attack detection','Inverse problems and nonlinear dynamics in mathematical physics'];
+const coursesEn=[['Information Confrontation Principles','Intelligent Weapon Systems'],['Weapon Innovation Design and Practice (Control)']];
+const patentsEn=['A Vehicle Fusion Localization System and Method in Complex Constrained Environments','A Vehicle Localization Integrity Monitoring Method and System Based on Residual Detection','A Scene-Classification-Based Navigation Method for Autonomous Vehicles','Adaptive Evaluation Method for Fault Detection, Identification, and Adaptation of Autonomous Vehicle Localization Integrity','A Localization Method Using Long-Term Evolution Received Signal Strength Indicators in Tunnel Environments'];
+const serviceEn=['Associate Editor, The International Journal of Intelligent Control and Systems','Youth Editorial Board Member, Journal of Artificial Intelligence and Control Systems','Reviewer, IEEE Trans. Instrum. Meas., IEEE Trans. Veh. Technol., IEEE Trans. Intell. Veh., IEEE Trans. Intell. Transp. Syst., and IEEE Intell. Transp. Syst. Mag.'];
+const bioEn='Jiageng Liu is a Ph.D. candidate, Associate Professor, Master’s Supervisor, Electrical Engineer, Senior Electrical Technician, and Psychological Counselor. He graduated from Northeastern University with a major in Control Engineering and is a full-time faculty member in Information Confrontation at Shenyang Ligong University. His research interests include multi-sensor fusion, vehicle localization and tracking, information confrontation, and inverse problems and nonlinear dynamics in mathematical physics.';
+function setList(selector,items){document.querySelector(selector).innerHTML=items.map(item=>`<li>${item}</li>`).join('')}
+function setLanguage(lang){
+  const t=translations[lang]; document.documentElement.lang=lang==='en'?'en':'zh-CN'; document.title=lang==='en'?'Jiageng Liu | Academic Homepage':'刘佳庚 | 个人学术主页';
+  document.querySelector('.site-title').textContent=t.site; document.querySelector('.mobile-bar strong').textContent=t.site; document.querySelector('h1').textContent=t.title;
+  const nav=[t.navHome,t.navContact,t.navBio,t.navResearch,t.navPubs,t.navPatents,t.navTeaching,t.navService]; const navLinks=[...document.querySelectorAll('.sidebar nav a')]; navLinks.forEach((a,i)=>a.textContent=nav[i]); [...document.querySelectorAll('.nav-label')][0].textContent=lang==='en'?'Research': '研究'; [...document.querySelectorAll('.nav-label')][1].textContent=lang==='en'?'Teaching':'教学'; [...document.querySelectorAll('.nav-label')][2].textContent=t.navServiceGroup;
+  document.querySelector('.profile-text').innerHTML=`<a class="name-link" href="#home">${t.site}</a><p>${t.profile}</p><p>${t.profileSchool}</p>`;
+  const sections=[['biography',t.bioTitle],['research',t.researchTitle],['teaching',t.teachingTitle],['publications',t.pubTitle],['patents',t.patentTitle],['service',t.serviceTitle],['contact',t.contactTitle]]; sections.forEach(([id,label])=>document.querySelector(`#${id} h2`).textContent=label);
+  document.querySelector('#biography').innerHTML=`<h2>${t.bioTitle}</h2><p>${lang==='en'?bioEn:'刘佳庚，博士研究生，副教授、硕士生导师，电气工程师，电工高级技师，心理咨询师，毕业于东北大学控制工程专业，现为装备工程学院信息对抗专业专任教师。主要从事多传感器融合、车辆定位、跟踪、信息对抗等研究。'}</p><p>${lang==='en'?'In recent years, he has led or participated in six research projects funded by the National Natural Science Foundation of China, the Natural Science Foundation of Liaoning Province, and other programs. He has published more than ten SCI papers in international journals and holds seven invention patents. He has received awards for academic achievements, technological innovation, and teaching guidance.':'近年来，主持/参与国家自然科学基金、辽宁省自然科学基金等科研项目 6 项，在 IEEE 汇刊等国际期刊发表 SCI 论文 10 余篇，发明专利 7 项；曾获辽宁省自然科学学术成果奖、科技创新奖、大学生创新创业大赛优秀指导教师、辽宁省技能大赛优秀指导教师、辽宁省教学信息化大赛二等奖。'}</p><p>${lang==='en'?'He currently serves as Associate Editor of <em>The International Journal of Intelligent Control and Systems</em>, a Youth Editorial Board Member of <em>Journal of Artificial Intelligence and Control Systems</em>, and a reviewer for five IEEE journals.':'现担任国际期刊 <em>The International Journal of Intelligent Control and Systems</em> 副主编（Associate Editor），<em>Journal of Artificial Intelligence and Control Systems</em> 青年编委，<em>IEEE Trans. Instrum. Meas.</em>、<em>IEEE Trans. Veh. Technol.</em>、<em>IEEE Trans. Intell. Veh.</em>、<em>IEEE Trans. Intell. Transp. Syst.</em>、<em>IEEE Intell. Transp. Syst. Mag.</em> 审稿人。'}</p>`;
+  setList('#research .plain-list',lang==='en'?researchEn:researchZh);
+  document.querySelector('#teaching').innerHTML=`<h2>${t.teachingTitle}</h2><div class="course-columns"><div><h3>${t.undergrad}</h3><ul class="plain-list"><li>${lang==='en'?coursesEn[0][0]:'《信息对抗原理》'}</li><li>${lang==='en'?coursesEn[0][1]:'《智能武器系统》'}</li></ul></div><div><h3>${t.grad}</h3><ul class="plain-list"><li>${lang==='en'?coursesEn[1][0]:'《武器创新设计与实践（控制）》'}</li></ul></div></div>`;
+  document.querySelector('#publications .section-note').textContent=t.pubNote; document.querySelector('#patents .section-note').textContent=t.patentNote;
+  if(lang==='en')setList('#patents .patent-list',patentsEn.map((x,i)=>`<span>${['2023','2023','2024','2026','2026'][i]}</span><a href="${document.querySelectorAll('#patents .patent-list a')[i]?.href||'#'}" target="_blank" rel="noopener">${x}</a><small>Granted invention patent · ${i<2?'First inventor':'Inventor'}</small>`));
+  else {const patentTitles=['一种复杂受限环境中车辆融合定位系统及方法','一种基于残差检测的车辆定位完好性监测方法及系统','一种基于场景分类的自动驾驶车辆导航方法','自动驾驶定位完好性故障检测识别自适应评估方法','隧道环境下使用长期演进接收信号强度指示符的定位方法']; const urls=['CN114415224B','CN115291253B','CN115285143B','CN121384095B','CN117930132B']; setList('#patents .patent-list',patentTitles.map((x,i)=>`<span>${['2023','2023','2024','2026','2026'][i]}</span><a href="https://patents.google.com/patent/${urls[i]}/zh" target="_blank" rel="noopener">${x}</a><small>${urls[i].replace('B',' B')} · ${i<2?'第一发明人':'发明人'}</small>`))}
+  setList('#service .plain-list',lang==='en'?serviceEn:['《The International Journal of Intelligent Control and Systems》副主编（Associate Editor）','《Journal of Artificial Intelligence and Control Systems》青年编委','《IEEE Trans. Instrum. Meas.》《IEEE Trans. Veh. Technol.》《IEEE Trans. Intell. Veh.》《IEEE Trans. Intell. Transp. Syst.》《IEEE Intell. Transp. Syst. Mag.》审稿人']);
+  document.querySelector('#contact').innerHTML=`<h2>${t.contactTitle}</h2><p>${t.address}</p><p>${t.email}<a href="mailto:jiagengliu@sylu.edu.cn">jiagengliu@sylu.edu.cn</a></p>`; document.querySelector('footer').textContent=t.footer;
+  document.querySelector('[data-lang="zh"]').textContent=lang==='en'?'Simplified Chinese':'简体中文'; document.querySelector('[data-lang="en"]').textContent='English'; document.querySelectorAll('.language-button').forEach(btn=>btn.classList.toggle('active',btn.dataset.lang===lang)); localStorage.setItem('site-language',lang);
+}
+document.querySelectorAll('.language-button').forEach(btn=>btn.addEventListener('click',()=>setLanguage(btn.dataset.lang)));
+setLanguage(localStorage.getItem('site-language')||'zh');
