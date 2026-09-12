@@ -32,11 +32,10 @@ const publicationDetails=[
 const publicationRoles=['corresponding','third','third','third','corresponding','second','first','third','corresponding','third','corresponding','first','second','first'];
 function updatePublicationDetails(lang){
   const list=document.querySelector('#publications .publication-list');
-  const items=[...list.querySelectorAll(':scope > li:not(.pub-group-title)')];
+  const items=[...list.querySelectorAll(':scope > li')];
   items.forEach((item,i)=>{if(!item.dataset.pubIndex)item.dataset.pubIndex=String(i)});
   const roleOrder=['first','corresponding','second','third','other'];
   items.sort((a,b)=>roleOrder.indexOf(publicationRoles[Number(a.dataset.pubIndex)])-roleOrder.indexOf(publicationRoles[Number(b.dataset.pubIndex)]));
-  list.querySelectorAll('.pub-group-title').forEach(item=>item.remove());
   items.forEach(item=>{
     const i=Number(item.dataset.pubIndex); const [authors,details,metrics]=publicationDetails[i]||[]; if(!authors)return;
     const role=publicationRoles[i]||'other';
