@@ -44,13 +44,14 @@ function updatePublicationDetails(lang){
     const names=authors.replace(/, and | and /g,', ').split(', ');
     const markedNames=names.map(name=>name==='Jiageng Liu'?`<strong>${lang==='en'?'J. Liu':'Jiageng Liu'}</strong>${role==='corresponding'?'*':''}`:lang==='en'?toIEEEName(name):name);
     const authorText=lang==='en'?(markedNames.length>1?`${markedNames.slice(0,-1).join(', ')}, and ${markedNames.at(-1)}`:markedNames[0]):markedNames.join('，');
-    item.innerHTML=`<span class="citation-index">[${items.indexOf(item)+1}]</span><span class="citation-text">${authorText}. <a href="${href}" target="_blank" rel="noopener">${title}</a>${lang==='en'?',':' [J].'} ${venue}, ${rest}. <span class="pub-metrics">${metrics}</span></span>`;
+    const citationBody=lang==='en'?`${authorText}, "<a href="${href}" target="_blank" rel="noopener">${title}</a>," ${venue}, ${rest}.`:`${authorText}. <a href="${href}" target="_blank" rel="noopener">${title}</a> [J]. ${venue}, ${rest}.`;
+    item.innerHTML=`<span class="citation-index">[${items.indexOf(item)+1}]</span><span class="citation-text">${citationBody} <span class="pub-metrics">${metrics}</span></span>`;
     list.append(item);
   });
   const note=document.querySelector('#publications .section-note'); const marker=lang==='en'?'* Corresponding author':'* 通讯作者'; if(!document.querySelector('.corresponding-note')){const p=document.createElement('p');p.className='corresponding-note';note.after(p)} document.querySelector('.corresponding-note').textContent=marker;
 }
 function toIEEEName(name){
-  const parts=name.trim().split(/\s+/), surname=parts.pop(), initials=parts.join(' ').split(/[- ]/).filter(Boolean).map(part=>`${part[0]}.`).join('');
+  const parts=name.trim().split(/\s+/), surname=parts.pop(), initials=parts.join(' ').split(/\s+/).filter(Boolean).map(part=>part.includes('-')?`${part.split('-')[0][0]}.-${part.split('-')[1][0]}.`:`${part[0]}.`).join(' ');
   return `${initials} ${surname}`;
 }
 function setList(selector,items){document.querySelector(selector).innerHTML=items.map(item=>`<li>${item}</li>`).join('')}
