@@ -38,7 +38,7 @@ function updatePublicationDetails(lang){
     if(!metricEl){metricEl=document.createElement('small');metricEl.className='pub-metrics';item.append(metricEl)}
     authorEl.textContent=`${lang==='en'?'Authors: ':'作者：'}${authors}`;
     detailEl.textContent=`${lang==='en'?'Journal details: ':'期刊信息：'}${details}`;
-    metricEl.textContent=`${lang==='en'?'Journal metrics: ':'期刊指标：'}${metrics}`;
+    metricEl.textContent=metrics;
   });
 }
 function setList(selector,items){document.querySelector(selector).innerHTML=items.map(item=>`<li>${item}</li>`).join('')}
