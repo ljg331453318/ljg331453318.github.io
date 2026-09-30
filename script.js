@@ -30,7 +30,7 @@ const publicationDetails=[
   ['Ge Guo and Jiageng Liu','IEEE Transactions on Instrumentation and Measurement, vol. 71, article 8500810, 2022','IF 7.0; JCR Q1'],
   ['Jiageng Liu and Ge Guo','IEEE Transactions on Instrumentation and Measurement, vol. 70, 2021','IF 7.0; JCR Q1']
   ,['Meihong Zhao, Zhengxiao Han, Ende Wang, and Jiageng Liu','Scientific Reports, vol. 16, article 2897, 2026','IF 4.9; JCR Q1']
-  ,['Jiageng Liu and et al.','Proc. IMechE, Part D: Journal of Automobile Engineering, accepted, 2026','']
+  ,['Ende Wang, Meihong Zhao, and Jiageng Liu','Proc. IMechE, Part D: Journal of Automobile Engineering, accepted, 2026','']
 ];
 const publicationRoles=['corresponding','third','third','third','corresponding','second','first','third','third','corresponding','first','second','first','corresponding','corresponding'];
 function updatePublicationDetails(lang){
