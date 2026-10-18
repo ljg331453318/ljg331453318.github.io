@@ -7,6 +7,14 @@
   <title>刘佳庚 | 个人学术主页</title>
   <link rel="icon" href="favicon.svg" type="image/svg+xml" />
   <link rel="stylesheet" href="styles.css" />
+  <style>
+    footer{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+    .visit-counter{display:inline-flex;align-items:center;gap:5px;color:#777;white-space:nowrap}
+    .visit-counter .counterapi{display:inline-block;min-width:1.5em;color:var(--blue);font-weight:600}
+    .visit-counter .counterapi .coulstripemini{display:none}
+    .visit-counter .counterapi .iconAndCount{padding:0}
+    .visit-counter .counterapi .thecount{padding:0;color:var(--blue)}
+  </style>
 </head>
 <body>
   <div class="mobile-bar"><button class="mobile-toggle" aria-expanded="false">目录</button><strong>刘佳庚</strong></div>
@@ -61,9 +69,9 @@
 
       <section id="service" class="section"><h2>学术兼职</h2><ul class="plain-list"><li><em>The International Journal of Intelligent Control and Systems</em> 副主编（Associate Editor）</li><li><em>Journal of Artificial Intelligence and Control Systems</em> 青年编委</li><li>《指挥控制与仿真》青年编委</li><li><em>IEEE Trans. Instrum. Meas.</em>、<em>IEEE Trans. Veh. Technol.</em>、<em>IEEE Trans. Intell. Veh.</em>、<em>IEEE Trans. Intell. Transp. Syst.</em>、<em>IEEE Intell. Transp. Syst. Mag.</em> 审稿人</li></ul></section>
       <section id="contact" class="section contact"><h2>联系方式</h2><p>沈阳理工大学 装备工程学院<br />辽宁省沈阳市浑南区南屏中路 6 号</p><p>联系邮箱：<a href="mailto:liu331453318@163.com">liu331453318@163.com</a>；<a href="mailto:jiagengliu@sylu.edu.cn">jiagengliu@sylu.edu.cn</a></p></section>
-      <footer>© 刘佳庚 · Shenyang Ligong University</footer>
+      <footer><span id="footer-copy">© 刘佳庚 · Shenyang Ligong University</span><span class="visit-counter"><span id="counter-label">访问量：</span><span class="counterapi" ns="ljg331453318.github.io" action="view" key="homepage" noIcon="true" noLink="true" noCss="true" noAnim="true">—</span></span></footer>
     </main>
   </div>
-  <script src="script.js?v=20261018-remove-three-publications"></script>
+  <script src="script.js?v=20261018-public-visit-counter"></script>
 </body>
 </html>
