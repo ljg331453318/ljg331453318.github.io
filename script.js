@@ -31,23 +31,26 @@ const publicationDetails=[
   ['Jiageng Liu and Ge Guo','IEEE Transactions on Instrumentation and Measurement, vol. 70, 2021','IF 7.0; JCR Q1']
   ,['Meihong Zhao, Zhengxiao Han, Ende Wang, and Jiageng Liu','Scientific Reports, vol. 16, article 2897, 2026','IF 4.9; JCR Q1']
   ,['Ende Wang, Meihong Zhao, and Jiageng Liu','Proc. IMechE, Part D: Journal of Automobile Engineering, accepted, 2026','']
+  ,['Jiageng Liu, Chao Li, Meihong Zhao, and Ende Wang*','Internet of Things, accepted, October 2026 (Ref. IOT_102143)','']
 ];
-const publicationRoles=['corresponding','third','third','third','corresponding','second','first','third','third','corresponding','first','second','first','corresponding','corresponding'];
+const publicationRoles=['corresponding','third','third','third','corresponding','second','first','third','third','corresponding','first','second','first','corresponding','corresponding','first'];
 function updatePublicationDetails(lang){
   const list=document.querySelector('#publications .publication-list');
   const items=[...list.querySelectorAll(':scope > li')];
   items.forEach((item,i)=>{if(!item.dataset.pubIndex)item.dataset.pubIndex=String(i)});
   const roleOrder=['first','corresponding','second','third','other'];
-  items.sort((a,b)=>roleOrder.indexOf(publicationRoles[Number(a.dataset.pubIndex)])-roleOrder.indexOf(publicationRoles[Number(b.dataset.pubIndex)]));
+  const yearOf=item=>Number(publicationDetails[Number(item.dataset.pubIndex)]?.[1]?.match(/\b20\d{2}\b/)?.[0]||0);
+  items.sort((a,b)=>roleOrder.indexOf(publicationRoles[Number(a.dataset.pubIndex)])-roleOrder.indexOf(publicationRoles[Number(b.dataset.pubIndex)])||yearOf(b)-yearOf(a));
   items.forEach(item=>{
     const i=Number(item.dataset.pubIndex); const [authors,details,metrics]=publicationDetails[i]||[]; if(!authors)return;
     const role=publicationRoles[i]||'other';
     if(!item.dataset.title){item.dataset.title=item.querySelector('a')?.textContent||'';item.dataset.href=item.querySelector('a')?.href||'#';item.dataset.venue=item.querySelector('.pub-venue')?.textContent||''}
-    const title=item.dataset.title, href=item.dataset.href, venue=item.dataset.venue, rest=details.replace(`${venue}, `,'');
+    const title=item.dataset.title, href=item.dataset.href||'#', venue=item.dataset.venue, rest=details.replace(`${venue}, `,'');
     const names=authors.replace(/, and | and /g,', ').split(', ');
-    const markedNames=names.map(name=>name==='Jiageng Liu'?`<strong>${lang==='en'?'J. Liu':'Jiageng Liu'}</strong>${role==='corresponding'?'*':''}`:name==='et al.'?'et al.':lang==='en'?toIEEEName(name):name);
+    const markedNames=names.map(name=>{const corresponding=name.endsWith('*'), cleanName=corresponding?name.slice(0,-1):name;return cleanName==='Jiageng Liu'?`<strong>${lang==='en'?'J. Liu':'Jiageng Liu'}</strong>${role==='corresponding'||corresponding?'*':''}`:cleanName==='et al.'?'et al.':`${lang==='en'?toIEEEName(cleanName):cleanName}${corresponding?'*':''}`});
     const authorText=lang==='en'?(markedNames.includes('et al.')?`${markedNames[0]}, et al.`:(markedNames.length>1?`${markedNames.slice(0,-1).join(', ')}, and ${markedNames.at(-1)}`:markedNames[0])):markedNames.join('，');
-    const citationBody=lang==='en'?`${authorText}, "<a href="${href}" target="_blank" rel="noopener">${title}</a>," ${venue}, ${rest}.`:`${authorText}. <a href="${href}" target="_blank" rel="noopener">${title}</a> [J]. ${venue}, ${rest}.`;
+    const titleMarkup=href==='#'?title:`<a href="${href}" target="_blank" rel="noopener">${title}</a>`;
+    const citationBody=lang==='en'?`${authorText}, "${titleMarkup}," ${venue}, ${rest}.`:`${authorText}. ${titleMarkup} [J]. ${venue}, ${rest}.`;
     item.innerHTML=`<span class="citation-index">[${items.indexOf(item)+1}]</span><span class="citation-text">${citationBody} <span class="pub-metrics">${metrics}</span></span>`;
     list.append(item);
   });
