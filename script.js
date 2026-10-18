@@ -50,7 +50,8 @@ function updatePublicationDetails(lang){
     const markedNames=names.map(name=>{const corresponding=name.endsWith('*'), cleanName=corresponding?name.slice(0,-1):name;return cleanName==='Jiageng Liu'?`<strong>${lang==='en'?'J. Liu':'Jiageng Liu'}</strong>${role==='corresponding'||corresponding?'*':''}`:cleanName==='et al.'?'et al.':`${lang==='en'?toIEEEName(cleanName):cleanName}${corresponding?'*':''}`});
     const authorText=lang==='en'?(markedNames.includes('et al.')?`${markedNames[0]}, et al.`:(markedNames.length>1?`${markedNames.slice(0,-1).join(', ')}, and ${markedNames.at(-1)}`:markedNames[0])):markedNames.join('，');
     const titleMarkup=title;
-    const citationBody=lang==='en'?`${authorText}, "${titleMarkup}," ${venue}, ${rest}.`:`${authorText}. ${titleMarkup} [J]. ${venue}, ${rest}.`;
+    const venueMarkup=`<strong><em>${venue}</em></strong>`;
+    const citationBody=lang==='en'?`${authorText}, "${titleMarkup}," ${venueMarkup}, ${rest}.`:`${authorText}. ${titleMarkup} [J]. ${venueMarkup}, ${rest}.`;
     item.innerHTML=`<span class="citation-index">[${items.indexOf(item)+1}]</span><span class="citation-text">${citationBody} <span class="pub-metrics">${metrics}</span></span>`;
     list.append(item);
   });
