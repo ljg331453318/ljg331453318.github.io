@@ -80,9 +80,23 @@ function setLanguage(lang){
   const newPatentItems=(lang==='en'?additionalPatentsEn:additionalPatentsZh).map(([title,pub,app,appDate,pubDate,inventors])=>({title,url:pub,year:appDate.slice(0,4),meta:lang==='en'?`Published Chinese invention patent · Publication No. ${pub} · Application No. ${app} · Filed ${appDate} · Published ${pubDate} · ${inventors.startsWith('Jiageng Liu')?'First inventor':'Inventor'}`:`中国发明专利 · 已公开 · 公开号 ${pub} · 申请号 ${app} · 申请日 ${appDate} · 公布日 ${pubDate} · ${inventors.startsWith('刘佳庚')?'第一发明人':'发明人'}`}));
   setList('#patents .patent-list',[...oldPatentItems,...newPatentItems].map(item=>`<span>${item.year}</span><a href="https://patents.google.com/patent/${item.url}/zh" target="_blank" rel="noopener">${item.title}</a><small>${item.meta}</small>`));
   setList('#service .plain-list',lang==='en'?serviceEn:['《The International Journal of Intelligent Control and Systems》副主编（Associate Editor）','《Journal of Artificial Intelligence and Control Systems》青年编委','《指挥控制与仿真》青年编委','《IEEE Trans. Instrum. Meas.》《IEEE Trans. Veh. Technol.》《IEEE Trans. Intell. Veh.》《IEEE Trans. Intell. Transp. Syst.》《IEEE Intell. Transp. Syst. Mag.》审稿人','辽宁省第二届职业技能大赛“新能源汽车智能化技术”项目裁判员','全国研究生教育评估监测专家库专家']);
-  document.querySelector('#contact').innerHTML=`<h2>${t.contactTitle}</h2><p>${t.address}</p><p>${t.email}<a href="mailto:liu331453318@163.com">liu331453318@163.com</a>；<a href="mailto:jiagengliu@sylu.edu.cn">jiagengliu@sylu.edu.cn</a></p>`; document.querySelector('#footer-copy').textContent=t.footer; document.querySelector('#counter-label').textContent=lang==='en'?'Page views:':'访问量：';
+  document.querySelector('#contact').innerHTML=`<h2>${t.contactTitle}</h2><p>${t.address}</p><p>${t.email}<a href="mailto:liu331453318@163.com">liu331453318@163.com</a>；<a href="mailto:jiagengliu@sylu.edu.cn">jiagengliu@sylu.edu.cn</a></p>`; document.querySelector('#footer-copy').textContent=t.footer; document.querySelector('#today-label').textContent=lang==='en'?'Today:':'今日访问量：'; document.querySelector('#total-label').textContent=lang==='en'?'All-time:':'历史访问量：';
   document.querySelector('[data-lang="zh"]').textContent=lang==='en'?'Simplified Chinese':'简体中文'; document.querySelector('[data-lang="en"]').textContent='English'; document.querySelectorAll('.language-button').forEach(btn=>btn.classList.toggle('active',btn.dataset.lang===lang)); localStorage.setItem('site-language',lang);
 }
 document.querySelectorAll('.language-button').forEach(btn=>btn.addEventListener('click',()=>setLanguage(btn.dataset.lang)));
 setLanguage(localStorage.getItem('site-language')||'zh');
-if(location.hostname==='ljg331453318.github.io'){const counterScript=document.createElement('script');counterScript.src='https://counterapi.com/c.js';counterScript.async=true;document.body.append(counterScript)}
+async function loadVisitorCounts(){
+  if(location.hostname!=='ljg331453318.github.io')return;
+  const today=new Intl.DateTimeFormat('sv-SE',{timeZone:'Asia/Shanghai',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+  const counters=[['today-count',`homepage-daily-${today}`],['total-count','homepage']];
+  await Promise.all(counters.map(async([elementId,key])=>{
+    const output=document.getElementById(elementId);
+    try{
+      const response=await fetch(`https://counterapi.com/api/ljg331453318.github.io/view/${encodeURIComponent(key)}`,{cache:'no-store'});
+      if(!response.ok)throw new Error('Counter request failed');
+      const result=await response.json();
+      output.textContent=new Intl.NumberFormat().format(result.value);
+    }catch{output.textContent='—'}
+  }));
+}
+loadVisitorCounts();
