@@ -44,12 +44,12 @@ function updatePublicationDetails(lang){
   items.forEach(item=>{
     const i=Number(item.dataset.pubIndex); const [authors,details,metrics]=publicationDetails[i]||[]; if(!authors)return;
     const role=publicationRoles[i]||'other';
-    if(!item.dataset.title){item.dataset.title=item.querySelector('a')?.textContent||'';item.dataset.href=item.querySelector('a')?.href||'#';item.dataset.venue=item.querySelector('.pub-venue')?.textContent||''}
-    const title=item.dataset.title, href=item.dataset.href||'#', venue=item.dataset.venue, rest=details.replace(`${venue}, `,'');
+    if(!item.dataset.title){item.dataset.title=item.querySelector('a')?.textContent||'';item.dataset.venue=item.querySelector('.pub-venue')?.textContent||''}
+    const title=item.dataset.title, venue=item.dataset.venue, rest=details.replace(`${venue}, `,'');
     const names=authors.replace(/, and | and /g,', ').split(', ');
     const markedNames=names.map(name=>{const corresponding=name.endsWith('*'), cleanName=corresponding?name.slice(0,-1):name;return cleanName==='Jiageng Liu'?`<strong>${lang==='en'?'J. Liu':'Jiageng Liu'}</strong>${role==='corresponding'||corresponding?'*':''}`:cleanName==='et al.'?'et al.':`${lang==='en'?toIEEEName(cleanName):cleanName}${corresponding?'*':''}`});
     const authorText=lang==='en'?(markedNames.includes('et al.')?`${markedNames[0]}, et al.`:(markedNames.length>1?`${markedNames.slice(0,-1).join(', ')}, and ${markedNames.at(-1)}`:markedNames[0])):markedNames.join('，');
-    const titleMarkup=href==='#'?title:`<a href="${href}" target="_blank" rel="noopener">${title}</a>`;
+    const titleMarkup=title;
     const citationBody=lang==='en'?`${authorText}, "${titleMarkup}," ${venue}, ${rest}.`:`${authorText}. ${titleMarkup} [J]. ${venue}, ${rest}.`;
     item.innerHTML=`<span class="citation-index">[${items.indexOf(item)+1}]</span><span class="citation-text">${citationBody} <span class="pub-metrics">${metrics}</span></span>`;
     list.append(item);
