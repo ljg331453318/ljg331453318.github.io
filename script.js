@@ -36,8 +36,9 @@ const publicationDetails=[
 const publicationRoles=['corresponding','third','third','third','corresponding','second','first','third','third','corresponding','first','second','first','corresponding','corresponding','first'];
 function updatePublicationDetails(lang){
   const list=document.querySelector('#publications .publication-list');
-  const items=[...list.querySelectorAll(':scope > li')];
-  items.forEach((item,i)=>{if(!item.dataset.pubIndex)item.dataset.pubIndex=String(i)});
+  const allItems=[...list.querySelectorAll(':scope > li')];
+  allItems.forEach((item,i)=>{if(!item.dataset.pubIndex)item.dataset.pubIndex=String(i)});
+  const items=allItems.filter(item=>!item.hasAttribute('data-hidden-publication'));
   const roleOrder=['first','corresponding','second','third','other'];
   const yearOf=item=>Number(publicationDetails[Number(item.dataset.pubIndex)]?.[1]?.match(/\b20\d{2}\b/)?.[0]||0);
   items.sort((a,b)=>roleOrder.indexOf(publicationRoles[Number(a.dataset.pubIndex)])-roleOrder.indexOf(publicationRoles[Number(b.dataset.pubIndex)])||yearOf(b)-yearOf(a));
