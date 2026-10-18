@@ -21,24 +21,20 @@ const publicationDetails=[
   ['Ende Wang, Taiyang Ma, Jiageng Liu, Yifan Ji, and Suyao Sun','IEEE Communications Letters, vol. 30, 2026','IF 4.5; JCR Q2'],
   ['Ge Guo, Guangheng Liu, and Jiageng Liu','IEEE Transactions on Instrumentation and Measurement, vol. 75, 2026','IF 7.0; JCR Q1'],
   ['Ge Guo, Zeng-Bo Li, and Jiageng Liu','IEEE Transactions on Vehicular Technology, vol. 75, no. 6, 2026','IF 7.5; JCR Q1'],
-  ['Yaodong Wei, Jiageng Liu, Kejuan Xue, and Ende Wang','Defence Technology, 2026','IF 5.9; JCR Q1'],
   ['Jiageng Liu, Ge Guo, Xiaozheng Sun, Zengbo Li, and Haodong Lin','IEEE Transactions on Vehicular Technology, vol. 74, no. 4, 2025','IF 7.5; JCR Q1'],
-  ['Ende Wang, Ziyao Chen, Jiageng Liu, and Boxuan Sun','Results in Engineering, vol. 28, article 108261, 2025','IF 7.9; JCR Q1'],
   ['Ge Guo, Xiaozheng Sun, and Jiageng Liu','IEEE Transactions on Vehicular Technology, vol. 73, no. 11, 2024','IF 7.5; JCR Q1'],
   ['Ge Guo, Jiageng Liu, and Xiaozheng Sun','IEEE Transactions on Vehicular Technology, vol. 72, no. 8, 2023','IF 7.5; JCR Q1'],
   ['Jiageng Liu, Ge Guo, and Renyongkang Zhang','IEEE Transactions on Vehicular Technology, vol. 72, no. 5, 2023','IF 7.5; JCR Q1'],
   ['Ge Guo and Jiageng Liu','IEEE Transactions on Instrumentation and Measurement, vol. 71, article 8500810, 2022','IF 7.0; JCR Q1'],
   ['Jiageng Liu and Ge Guo','IEEE Transactions on Instrumentation and Measurement, vol. 70, 2021','IF 7.0; JCR Q1']
-  ,['Meihong Zhao, Zhengxiao Han, Ende Wang, and Jiageng Liu','Scientific Reports, vol. 16, article 2897, 2026','IF 4.9; JCR Q1']
   ,['Ende Wang, Meihong Zhao, and Jiageng Liu','Proc. IMechE, Part D: Journal of Automobile Engineering, first published online October 13, 2026','']
   ,['Jiageng Liu, Chao Li, Meihong Zhao, and Ende Wang*','Internet of Things, accepted, October 2026','IF 7.1; JCR Q1']
 ];
-const publicationRoles=['corresponding','third','third','third','corresponding','second','first','third','third','corresponding','first','second','first','corresponding','corresponding','first'];
+const publicationRoles=['corresponding','third','third','third','corresponding','first','third','corresponding','first','second','first','corresponding','first'];
 function updatePublicationDetails(lang){
   const list=document.querySelector('#publications .publication-list');
-  const allItems=[...list.querySelectorAll(':scope > li')];
-  allItems.forEach((item,i)=>{if(!item.dataset.pubIndex)item.dataset.pubIndex=String(i)});
-  const items=allItems.filter(item=>!item.hasAttribute('data-hidden-publication'));
+  const items=[...list.querySelectorAll(':scope > li')];
+  items.forEach((item,i)=>{if(!item.dataset.pubIndex)item.dataset.pubIndex=String(i)});
   const roleOrder=['first','corresponding','second','third','other'];
   const yearOf=item=>Number(publicationDetails[Number(item.dataset.pubIndex)]?.[1]?.match(/\b20\d{2}\b/)?.[0]||0);
   items.sort((a,b)=>roleOrder.indexOf(publicationRoles[Number(a.dataset.pubIndex)])-roleOrder.indexOf(publicationRoles[Number(b.dataset.pubIndex)])||yearOf(b)-yearOf(a));
