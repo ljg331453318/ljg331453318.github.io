@@ -1,0 +1,8 @@
+name = "ljg-homepage-counter"
+main = "worker.js"
+compatibility_date = "2026-10-20"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "ljg-homepage-counter"
+database_id = "ffe08434-b5c0-4a8e-821b-40efbe09986d"
