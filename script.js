@@ -36,9 +36,9 @@ const publicationRoles=['corresponding','third','third','third','corresponding',
 function updatePublicationDetails(lang){
   const list=document.querySelector('#publications .publication-list');
   const items=[...list.querySelectorAll(':scope > li')];
-  items.forEach((item,i)=>{if(!item.dataset.pubIndex)item.dataset.pubIndex=String(i)});
+  let nextIndex=0; items.forEach(item=>{if(!item.dataset.pubIndex){while(items.some(candidate=>candidate.dataset.pubIndex===String(nextIndex)))nextIndex++;item.dataset.pubIndex=String(nextIndex++)}});
   const yearOf=item=>Number(publicationDetails[Number(item.dataset.pubIndex)]?.[1]?.match(/\b20\d{2}\b/)?.[0]||0);
-  items.sort((a,b)=>yearOf(b)-yearOf(a)||Number(a.dataset.pubIndex)-Number(b.dataset.pubIndex));
+  items.sort((a,b)=>yearOf(b)-yearOf(a)||(Number(a.dataset.pubIndex)===14?-1:Number(b.dataset.pubIndex)===14?1:Number(a.dataset.pubIndex)-Number(b.dataset.pubIndex)));
   items.forEach(item=>{
     const i=Number(item.dataset.pubIndex); const [authors,details,metrics]=publicationDetails[i]||[]; if(!authors)return;
     const role=publicationRoles[i]||'other';
