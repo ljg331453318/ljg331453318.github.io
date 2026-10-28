@@ -17,28 +17,32 @@ const serviceEn=['Associate Editor, The International Journal of Intelligent Con
 const bioEn='Jiageng Liu is an Associate Professor and Master’s Supervisor with the School of Equipment Engineering at Shenyang Ligong University, where he is a full-time faculty member in Information Confrontation. He is also an Electrical Engineer, a Senior Electrical Technician, and a Psychological Counselor. He received the Ph.D. degree in Control Engineering from Northeastern University, China. Dr. Liu’s research focuses on multi-sensor information fusion, integrated navigation, land-vehicle localization and tracking, cooperative localization and intelligent transportation systems, information confrontation and localization integrity, and inverse problems and nonlinear dynamics in mathematical physics. He has led or participated in six research projects funded by the National Natural Science Foundation of China, the Natural Science Foundation of Liaoning Province, and other programs. He has published more than ten SCI-indexed papers in international journals and holds seven invention patents. He has received awards for academic achievements, technological innovation, and teaching guidance. He currently serves as Associate Editor of <em>The International Journal of Intelligent Control and Systems</em>, a Youth Editorial Board Member of <em>Journal of Artificial Intelligence and Control Systems</em> and <em>Command and Control &amp; Simulation</em>, and a reviewer for several IEEE journals. He has accepted an invitation to join the Editorial Board of <em>Scientific Reports</em>; his appointment is pending completion of the editorial agreement.';
 const publicationDetails=[
   ['Ge Guo, Haodong Lin, Guangheng Liu, and Jiageng Liu','IEEE Transactions on Vehicular Technology, Early Access, 2026','IF 7.5; JCR Q1'],
-  ['Yifan Ji, Ende Wang, and Jiageng Liu','IEEE Geoscience and Remote Sensing Letters, vol. 23, 2026','IF 4.8; JCR Q1'],
-  ['Ende Wang, Taiyang Ma, Jiageng Liu, Yifan Ji, and Suyao Sun','IEEE Communications Letters, vol. 30, 2026','IF 4.5; JCR Q2'],
-  ['Ge Guo, Guangheng Liu, and Jiageng Liu','IEEE Transactions on Instrumentation and Measurement, vol. 75, 2026','IF 7.0; JCR Q1'],
-  ['Ge Guo, Zeng-Bo Li, and Jiageng Liu','IEEE Transactions on Vehicular Technology, vol. 75, no. 6, 2026','IF 7.5; JCR Q1'],
+  ['Yifan Ji, Ende Wang*, and Jiageng Liu','IEEE Geoscience and Remote Sensing Letters, vol. 23, article 6010105, 2026','IF 4.8; JCR Q1'],
+  ['Ende Wang*, Taiyang Ma, Jiageng Liu, Yifan Ji, and Suyao Sun','IEEE Communications Letters, vol. 30, pp. 1046–1050, 2026','IF 4.5; JCR Q2'],
+  ['Ge Guo, Guangheng Liu, and Jiageng Liu','IEEE Transactions on Instrumentation and Measurement, vol. 75, pp. 1–11, January 2026','IF 7.0; JCR Q1'],
+  ['Ge Guo, Zeng-Bo Li, and Jiageng Liu','IEEE Transactions on Vehicular Technology, vol. 75, no. 6, pp. 9418–9432, June 2026','IF 7.5; JCR Q1'],
   ['Jiageng Liu, Ge Guo, Xiaozheng Sun, Zengbo Li, and Haodong Lin','IEEE Transactions on Vehicular Technology, vol. 74, no. 4, 2025','IF 7.5; JCR Q1'],
   ['Ge Guo, Xiaozheng Sun, and Jiageng Liu','IEEE Transactions on Vehicular Technology, vol. 73, no. 11, 2024','IF 7.5; JCR Q1'],
   ['Ge Guo, Jiageng Liu, and Xiaozheng Sun','IEEE Transactions on Vehicular Technology, vol. 72, no. 8, 2023','IF 7.5; JCR Q1'],
   ['Jiageng Liu, Ge Guo, and Renyongkang Zhang','IEEE Transactions on Vehicular Technology, vol. 72, no. 5, 2023','IF 7.5; JCR Q1'],
   ['Ge Guo and Jiageng Liu','IEEE Transactions on Instrumentation and Measurement, vol. 71, article 8500810, 2022','IF 7.0; JCR Q1'],
   ['Jiageng Liu and Ge Guo','IEEE Transactions on Instrumentation and Measurement, vol. 70, 2021','IF 7.0; JCR Q1']
-  ,['Ende Wang, Meihong Zhao, and Jiageng Liu','Proc. IMechE, Part D: Journal of Automobile Engineering, first published online October 13, 2026','']
+  ,['Ende Wang, Meihong Zhao, and Jiageng Liu','Proceedings of the Institution of Mechanical Engineers, Part D: Journal of Automobile Engineering, first published online October 13, 2026','IF 7.5; JCR Q1']
   ,['Jiageng Liu, Chao Li, Meihong Zhao, and Ende Wang*','Internet of Things, article 102143, 2026','IF 7.1; JCR Q1']
-  ,['Yaodong Wei, Jiageng Liu, Kejuan Xue, Ende Wang','Defence Technology, 2026','IF 5.9; JCR Q1']
+  ,['Yaodong Wei, Jiageng Liu, Kejuan Xue, Ende Wang*','Defence Technology, online first, August 2026','IF 5.9; JCR Q1']
   ,['Guangheng Liu, Ge Guo*, Yongchuan Wang, Yuhang Liu, Xinyu Liu, Jiageng Liu','IEEE Transactions on Instrumentation and Measurement, accepted October 2026','']
+  ,['Meihong Zhao, Zhengxiao Han, Ende Wang, and Jiageng Liu*','Scientific Reports, vol. 16, article 2897, 2026','IF 4.9; JCR Q1']
+  ,['Ende Wang, Ziyao Chen*, Jiageng Liu, and Boxuan Sun','Results in Engineering, vol. 28, article 108261, December 2025','IF 7.9; JCR Q1']
+  ,['Ende Wang, Suyao Sun, Kejuan Xue, Yifan Ji, Taiyang Ma, Kuiming Jiang, and Jiageng Liu','Multimedia Tools and Applications, vol. 85, no. 8, article 685, August 2026','']
 ];
-const publicationRoles=['corresponding','third','third','third','corresponding','first','third','corresponding','first','second','first','corresponding','first','second','other'];
+const publicationRoles=['corresponding','third','third','third','corresponding','first','third','corresponding','first','second','first','corresponding','first','second','other','corresponding','other','other'];
+const publicationOrder=[14,12,0,4,3,11,15,13,1,2,16,17,5,6,7,8,9,10];
 function updatePublicationDetails(lang){
   const list=document.querySelector('#publications .publication-list');
   const items=[...list.querySelectorAll(':scope > li')];
   items.forEach((item,i)=>{if(!item.dataset.pubIndex)item.dataset.pubIndex=String(i)});
-  const yearOf=item=>Number(publicationDetails[Number(item.dataset.pubIndex)]?.[1]?.match(/\b20\d{2}\b/)?.[0]||0);
-  items.sort((a,b)=>yearOf(b)-yearOf(a)||Number(a.dataset.pubIndex)-Number(b.dataset.pubIndex));
+  const orderOf=item=>publicationOrder.indexOf(Number(item.dataset.pubIndex));
+  items.sort((a,b)=>orderOf(a)-orderOf(b));
   items.forEach(item=>{
     const i=Number(item.dataset.pubIndex); const [authors,details,metrics]=publicationDetails[i]||[]; if(!authors)return;
     const role=publicationRoles[i]||'other';
