@@ -28,7 +28,7 @@ const publicationDetails=[
   ['Ge Guo and Jiageng Liu','IEEE Transactions on Instrumentation and Measurement, vol. 71, article 8500810, 2022','IF 7.0; JCR Q1'],
   ['Jiageng Liu and Ge Guo','IEEE Transactions on Instrumentation and Measurement, vol. 70, 2021','IF 7.0; JCR Q1']
   ,['Ende Wang, Meihong Zhao, and Jiageng Liu','Proceedings of the Institution of Mechanical Engineers, Part D: Journal of Automobile Engineering, first published online October 13, 2026','IF 7.5; JCR Q1']
-  ,['Jiageng Liu, Chao Li, Meihong Zhao, and Ende Wang*','Internet of Things, article 102143, 2026','IF 7.1; JCR Q1']
+  ,['Jiageng Liu, Chao Li, Meihong Zhao, and Ende Wang*','Internet of Things, vol. 40, article 102143, November 2026','IF 7.1; JCR Q1']
   ,['Yaodong Wei, Jiageng Liu, Kejuan Xue, Ende Wang*','Defence Technology, online first, August 2026','IF 5.9; JCR Q1']
   ,['Guangheng Liu, Ge Guo*, Yongchuan Wang, Yuhang Liu, Xinyu Liu, Jiageng Liu','IEEE Transactions on Instrumentation and Measurement, accepted October 2026','']
   ,['Meihong Zhao, Zhengxiao Han, Ende Wang, and Jiageng Liu*','Scientific Reports, vol. 16, article 2897, 2026','IF 4.9; JCR Q1']
