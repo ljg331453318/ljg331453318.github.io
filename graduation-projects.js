@@ -14,14 +14,14 @@ function citedNumbers(text) {
 function renderHub(topics, references) {
   const list = document.querySelector('#topic-list');
   const categories = ['姿态测量','组合导航','轨迹推算','异常检测','室内定位','协同定位','状态估计','航迹预测','遥感检测','行人导航'];
-  list.innerHTML = topics.map(topic => `<a class="topic-card" href="graduation-topic.html?id=${topic.id}&v=20261113-auditfix"><div class="topic-card-meta"><span class="topic-number">${String(topic.id).padStart(2,'0')}</span><span>${categories[topic.id-1]}</span></div><h3>${escapeHtml(topic.title)}</h3><p>${escapeHtml(topic.sections['设计范围'])}</p><span class="card-arrow">查看设计要求 <span aria-hidden="true">↗</span></span></a>`).join('');
+  list.innerHTML = topics.map(topic => `<a class="topic-card" href="graduation-topic.html?id=${topic.id}&v=20261113-demo-restore"><div class="topic-card-meta"><span class="topic-number">${String(topic.id).padStart(2,'0')}</span><span>${categories[topic.id-1]}</span></div><h3>${escapeHtml(topic.title)}</h3><p>${escapeHtml(topic.sections['设计范围'])}</p><span class="card-arrow">查看设计要求 <span aria-hidden="true">↗</span></span></a>`).join('');
 }
 
 function renderDetail(topics, references) {
   const target = document.querySelector('#topic-detail');
   const id = Number(new URLSearchParams(location.search).get('id'));
   const topic = topics.find(item => item.id === id);
-  if (!topic) { target.innerHTML = '<p>未找到该题目。<a href="graduation-projects.html?v=20261113-auditfix">返回目录</a></p>'; return; }
+  if (!topic) { target.innerHTML = '<p>未找到该题目。<a href="graduation-projects.html?v=20261113-demo-restore">返回目录</a></p>'; return; }
   const sections = topic.sections;
   document.title = topic.title + ' | 本科毕业设计';
   const number = String(id).padStart(2, '0');
@@ -29,11 +29,11 @@ function renderDetail(topics, references) {
   const cited = citedNumbers(sections['研究依据与适用性']);
   const relevant = references.filter(value => cited.has(Number(value.match(/^\[(\d+)\]/)?.[1])));
   target.innerHTML = `
-    <div class="breadcrumb"><a href="graduation-projects.html?v=20261113-auditfix">十个选题</a><span> / ${number}</span></div>
+    <div class="breadcrumb"><a href="graduation-projects.html?v=20261113-demo-restore">十个选题</a><span> / ${number}</span></div>
     <div class="eyebrow">本科毕业设计 · 题目 ${number}</div>
     <h1>${escapeHtml(topic.title)}</h1>
     <p class="lead">${escapeHtml(sections['研究依据与适用性'])}</p>
-    <div class="detail-actions"><a class="action" href="graduation-demos/${number}.html?v=20261113-auditfix">查看动态界面演示 →</a><a class="quiet" href="graduation-projects.html?v=20261113-auditfix">返回选题目录</a></div>
+    <div class="detail-actions"><a class="action" href="graduation-demos/${number}.html?v=20261113-demo-restore">查看动态界面演示 →</a><a class="quiet" href="graduation-projects.html?v=20261113-demo-restore">返回选题目录</a></div>
     <div class="detail-grid"><div>
       <section class="content-block"><h2>设计范围</h2><p>${escapeHtml(sections['设计范围'])}</p></section>
       <section class="content-block"><h2>设计任务</h2><ol class="task-list">${tasks}</ol></section>

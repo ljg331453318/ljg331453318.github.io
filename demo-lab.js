@@ -154,23 +154,6 @@ function sim6(p){
 }
 
 function sim7(p){
-  const r=rng(+p.seed),vx=+p.speed,mis=1+(+p.stiffness)/100,dt=.02,n=500,truth=[],est=[],steer=[],rows=[],M=1300,Iz=2200,lf=1.2,lr=1.5,Cf=70000,Cr=80000;
-  let vy=0,yaw=0,ev=0,er=0,pv=.5,pr=.2;
-  for(let i=0;i<n;i++){
-    const t=i*dt,delta=(p.steer==='阶跃转向'?(t>1?.035:0):p.steer==='正弦转向'?.025*Math.sin(t*1.4):.045*Math.sin(t*1.2)*Math.exp(-Math.max(0,t-4)/4));
-    const dynamics=(v,z,scale)=>{const cf=Cf*scale,cr=Cr*scale,Ff=cf*(delta-(v+lf*z)/vx),Fr=cr*(-(v-lr*z)/vx);return [(Ff+Fr)/M-vx*z,(lf*Ff-lr*Fr)/Iz,Ff+Fr];};
-    const [dvy,dr,F]=dynamics(vy,yaw,1);vy+=dvy*dt;yaw+=dr*dt;
-    const [edvy,edr]=dynamics(ev,er,mis);ev+=edvy*dt;er+=edr*dt;pv+=.001;pr+=.0003;
-    const measuredR=yaw+noise(r)*.004,Kr=pr/(pr+.0001);er+=Kr*(measuredR-er);pr*=1-Kr;
-    const ay=F/M+noise(r)*.035,innovation=ay-(dynamics(ev,er,mis)[2]/M),Kv=pv/(pv+.1);ev+=Kv*innovation*.07;pv*=1-.08*Kv;
-    truth.push([t,vy]);est.push([t,ev]);steer.push([t,delta*180/Math.PI]);rows.push([fmt(t),fmt(delta*180/Math.PI),fmt(vy),fmt(ev),fmt(yaw),fmt(er),fmt(Math.atan2(ev,vx)*180/Math.PI)]);
-  }
-  const e=truth.map((v,i)=>v[1]-est[i][1]);
-  const yawTruth=rows.map(v=>[+v[0],+v[4]]),yawEstimate=rows.map(v=>[+v[0],+v[5]]),beta=rows.map(v=>[+v[0],+v[6]]);
-  return {metrics:[['侧向速度 RMSE',fmt(rmse(e),3)+' m/s'],['末端侧偏角',fmt(Math.atan2(ev,vx)*180/Math.PI)+'°'],['横摆角速度',fmt(er,3)+' rad/s'],['模型刚度偏差',p.stiffness+'%']],charts:[seriesChart('侧向速度：仿真真值与 KF 估计',[xy(truth,'独立真值',colors[0]),xy(est,'估计值',colors[2])],'仅适用于非零中等车速与小侧偏角。',true),seriesChart('前轮转角输入',[xy(steer,'转角 °',colors[1])]),seriesChart('横摆角速度：真值与估计',[xy(yawTruth,'真值',colors[0]),xy(yawEstimate,'估计',colors[2])]),seriesChart('质心侧偏角估计',[xy(beta,'β °',colors[3])])],headers:['时间 s','前轮角 °','真值 vy','估计 vy','真值 r','估计 r','估计 β °'],rows,explain:'二维单轨模型由前轮转角驱动，以横摆角速度和侧向加速度辅助状态更新。刚度失配选项用于观察模型偏差；不包含整车稳定性控制。'};
-}
-
-function sim7(p){
   const r=rng(+p.seed),vx=+p.speed,mis=1+(+p.stiffness)/100,dt=.02,n=500,M=1300,Iz=2200,lf=1.2,lr=1.5,Cf=70000,Cr=80000;
   const truth=[],est=[],steer=[],yawTruth=[],yawEstimate=[],beta=[],rows=[];let vy=0,yaw=0,xhat=[0,0],P=[[.5,0],[0,.2]];
   const filterModel=(scale)=>{const cf=Cf*scale,cr=Cr*scale;return{A:[[-(cf+cr)/(M*vx),(-lf*cf+lr*cr)/(M*vx)-vx],[(lr*cr-lf*cf)/(Iz*vx),-(lf*lf*cf+lr*lr*cr)/(Iz*vx)]],B:[cf/M,lf*cf/Iz],H:[[-(cf+cr)/(M*vx),(-lf*cf+lr*cr)/(M*vx)+vx],[0,1]],D:[cf/M,0]};};
