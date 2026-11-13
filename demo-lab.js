@@ -21,7 +21,7 @@ const settings = {
   7:{subtitle:'二自由度单轨模型、横摆观测与侧向状态 KF',scope:'限定中等非零车速、小转角与线性轮胎条件；低速近零时不计算侧偏角。',fields:[field('steer','转向工况','select','正弦转向',{options:['阶跃转向','正弦转向','模拟变道']}),field('speed','纵向速度 m/s','select','10',{options:['5','10','15']}),field('stiffness','侧偏刚度失配 %','range',0,{min:-20,max:20,step:5}),field('seed','试验种子','number',87,{min:1,max:9999})]},
   8:{subtitle:'匀速、匀加速和协调转弯候选模型的短时预测',scope:'根据当前与过去观测形成候选；真值只用于事后误差评估，不称为完整 IMM。',fields:[field('motion','测试机动','select','协调转弯',{options:['匀速','匀加速','协调转弯','机动切换']}),field('horizon','预测时域 s','select','3',{options:['1','2','3']}),field('uncertainty','观测噪声 m','range',0.8,{min:0.1,max:3,step:0.1}),field('seed','试验种子','number',64,{min:1,max:9999})]},
   9:{subtitle:'单图扫描、船舶框选与批量处理界面示意',scope:'使用合成遥感样例演示检测流程。此处是图像处理原型，不能替代训练后的船舶检测模型或独立测试集 AP50。',fields:[field('scene','影像场景','select','近岸',{options:['开阔水域','近岸','港区','无船']}),field('size','输入尺寸 px','select','512',{options:['512','768']}),field('confidence','置信度阈值','range',0.55,{min:0.1,max:0.95,step:0.05}),field('seed','样例种子','number',12,{min:1,max:9999})]},
-  10:{subtitle:'加速度峰值计步、步长标定、航向融合与轨迹推算',scope:'固定携带方式；使用合成加速度/航向序列。无连续真值时只核对检查点和终点。',fields:[field('route','步行路线','select','矩形闭环',{options:['直线','矩形闭环','含转弯']}),field('stride','标定步长 m','range',0.7,{min:0.4,max:1,step:0.02}),field('threshold','计步峰值阈值','range',1.15,{min:0.4,max:2,step:0.05}),field('magnetic','磁场异常','select','关闭',{options:['关闭','开启']}),field('seed','试验种子','number',29,{min:1,max:9999})]}
+  10:{subtitle:'加速度峰值计步、步长标定、航向融合与轨迹推算',scope:'固定携带方式；使用合成加速度/航向序列。无连续真值时只核对检查点和终点。“航向偏置”选项表示磁航向受扰的简化示意。',fields:[field('route','步行路线','select','矩形闭环',{options:['直线','矩形闭环','含转弯']}),field('stride','标定步长 m','range',0.7,{min:0.4,max:1,step:0.02}),field('threshold','计步峰值阈值','range',1.15,{min:0.4,max:2,step:0.05}),field('magnetic','航向偏置','select','关闭',{options:['关闭','开启']}),field('seed','试验种子','number',29,{min:1,max:9999})]}
 };
 
 function seriesChart(title,series,note='',wide=false){return {title,series,note,wide,type:'lines'};}
@@ -88,7 +88,9 @@ function sim3(p){
   const duration=+p.duration,trial=seed=>{const r=rng(seed),truth=[],dr=[],cv=[],error=[],rows=[];let x=0,y=0,h=0,dx=0,dy=0,dh=(+p.heading)*Math.PI/180,ox=0,oy=0,ovx=0,ovy=0;
     for(let i=0;i<320;i++){const t=i*.1,v=p.motion==='启停'?(i%75<15?0:2.7):3,turn=p.motion==='匀速转弯'?.055:0;h+=turn*.1;x+=v*.1*Math.cos(h);y+=v*.1*Math.sin(h);
       const denied=t>=5&&t<5+duration;
-      if(!denied){dx=x+noise(r)*.25;dy=y+noise(r)*.25;dh=h+(+p.heading)*Math.PI/180*.1;ox=x;oy=y;ovx=v*Math.cos(h);ovy=v*Math.sin(h);}else{dh+=(turn+(+p.bias)*Math.PI/180+noise(r)*.004)*.1;dx+=(v+noise(r)*.12)*.1*Math.cos(dh);dy+=(v+noise(r)*.12)*.1*Math.sin(dh);}
+      // Gyro-derived heading is integrated continuously. GNSS may reset position, never hidden truth heading.
+      dh+=(turn+(+p.bias)*Math.PI/180+noise(r)*.004)*.1;
+      if(!denied){dx=x+noise(r)*.25;dy=y+noise(r)*.25;ox=x;oy=y;ovx=v*Math.cos(h);ovy=v*Math.sin(h);}else{dx+=(v+noise(r)*.12)*.1*Math.cos(dh);dy+=(v+noise(r)*.12)*.1*Math.sin(dh);}
       truth.push([x,y]);dr.push([dx,dy]);cv.push(denied?[ox+ovx*(t-5),oy+ovy*(t-5)]:[x,y]);error.push([t,Math.hypot(dx-x,dy-y)]);rows.push([fmt(t),denied?'拒止/预测':'GNSS 更新',fmt(x),fmt(y),fmt(dx),fmt(dy),fmt(Math.hypot(dx-x,dy-y))]);
     }return {truth,dr,cv,error,rows};};
   const a=trial(+p.seed),end=Math.round((5+duration)*10)-1,errors=a.error.filter(v=>v[0]>=5&&v[0]<5+duration).map(v=>v[1]);let endpoints=[];
@@ -97,16 +99,16 @@ function sim3(p){
 }
 
 function sim4(p){
-  const r=rng(+p.seed),alpha=+p.alpha,threshold=-2*Math.log(alpha),data=[],gate=[],rows=[];let streak=0,alarmAt=null,falseAlarms=0,miss=0;
+  const r=rng(+p.seed),alpha=+p.alpha,threshold=-2*Math.log(alpha),data=[],gate=[],rows=[];let streak=0,alarmAt=null,falseAlarmEvents=0,miss=0,wasAlarm=false;
   for(let i=0;i<120;i++){
     const active=i>=42&&i<92,missing=active&&p.anomaly==='连续缺测',bias=active?(p.anomaly==='位置突变'?+p.magnitude:p.anomaly==='缓慢漂移'?(i-42)/50*(+p.magnitude):0):0;
     const vx=noise(r)*1.1+bias,vy=noise(r)*1.1,nis=missing?null:(vx*vx+vy*vy)/1.21;
-    let state='正常';if(missing){streak=0;state='数据超时';if(active&&alarmAt===null)alarmAt=i;}
-    else if(nis>threshold){streak++;if(streak>=+p.confirm){state='异常告警';if(active&&alarmAt===null)alarmAt=i;if(!active)falseAlarms++;}}else streak=0;
+    let state='正常';if(missing){streak=0;wasAlarm=false;state='数据超时';if(active&&alarmAt===null)alarmAt=i;}
+    else if(nis>threshold){streak++;if(streak>=+p.confirm){state='异常告警';if(active&&alarmAt===null)alarmAt=i;if(!active&&!wasAlarm)falseAlarmEvents++;wasAlarm=true;}}else{streak=0;wasAlarm=false;}
     data.push([i,nis]);gate.push([i,threshold]);rows.push([i,missing?'缺测':fmt(vx),missing?'—':fmt(nis),fmt(threshold),state]);
   }
   const activeEvents=p.anomaly==='正常'?0:1;miss=activeEvents&&alarmAt===null?1:0;
-  return {metrics:[['二维 NIS 门限',fmt(threshold)],['事件检测',activeEvents?(miss?'漏检':'检出'):'无注入'],['首次告警延迟',alarmAt===null?'—':Math.max(0,alarmAt-42)+' 帧'],['正常段误报',falseAlarms+' 帧']],charts:[seriesChart('预测新息统计量与 χ²₂ 门限',[xy(data,'NIS',colors[0]),xy(gate,'门限',colors[1])],'缺测样本留空并产生独立超时事件，不能代入卡方检验。',true)],headers:['帧','东向新息 m','NIS','门限','检测状态'],rows,explain:`门限由二维位置观测和 α=${p.alpha} 推出。单次检验虚警概率不等于连续确认后的经验虚警率；要报告实际虚警率与检测率，需要独立正常/异常测试集。`};
+  return {metrics:[['二维 NIS 门限',fmt(threshold)],['事件检测',activeEvents?(miss?'漏检':'检出'):'无注入'],['首次告警延迟',alarmAt===null?'—':Math.max(0,alarmAt-42)+' 帧'],['正常段误报事件',falseAlarmEvents+' 次']],charts:[seriesChart('预测新息统计量与 χ²₂ 门限',[xy(data,'NIS',colors[0]),xy(gate,'门限',colors[1])],'缺测样本留空并产生独立超时事件，不能代入卡方检验。',true)],headers:['帧','东向新息 m','NIS','门限','检测状态'],rows,explain:`门限基于二维、各向同性且方差为 1.21 m² 的简化新息模型与 α=${p.alpha} 计算。正常段误报按连续告警事件计数；这只是单条合成序列示意，不能据此宣称经验虚警率。`};
 }
 
 function sim5(p){
@@ -142,13 +144,13 @@ function sim6(p){
       const noGps=p.outage==='开启'&&c===1&&t>=35&&t<70;if(t%4===0&&!noGps){for(let axis=0;axis<2;axis++){const index=2*c+axis,z=x[index]+noise(r)*1.35,H=Array(6).fill(0);H[index]=1;update(H,z,1.82);a[index]+=.45*(z-a[index]);}}
       truth[c].push([x[2*c],x[2*c+1]]);ind[c].push([a[2*c],a[2*c+1]]);
     }
-    for(const [c,d] of [[0,1],[1,2]]){if(r()<loss){dropped++;continue;}const dx=b[2*c]-b[2*d],dy=b[2*c+1]-b[2*d],range=Math.hypot(dx,dy),H=Array(6).fill(0);H[2*c]=dx/range;H[2*c+1]=dy/range;H[2*d]=-dx/range;H[2*d+1]=-dy/range;update(H,range+noise(r)*.55,0.31);used++;}
+    for(const [c,d] of [[0,1],[1,2]]){if(r()<loss){dropped++;continue;}const dx=b[2*c]-b[2*d],dy=b[2*c+1]-b[2*d+1],range=Math.max(1e-6,Math.hypot(dx,dy)),H=Array(6).fill(0);H[2*c]=dx/range;H[2*c+1]=dy/range;H[2*d]=-dx/range;H[2*d+1]=-dy/range;const measured=dist([x[2*c],x[2*c+1]],[x[2*d],x[2*d+1]])+noise(r)*.55,linearizedMeasurement=H.reduce((s,v,k)=>s+v*b[k],0)+measured-range;update(H,linearizedMeasurement,.3025);used++;}
     for(let c=0;c<3;c++)joint[c].push([b[2*c],b[2*c+1]]);
     uncertainty.push([t,Math.sqrt(Math.max(0,P[2][2]+P[3][3]))]);
     rows.push([t,...b.map(v=>fmt(v)),used,dropped]);
   }
   const ej=joint.flatMap((track,c)=>track.map((v,i)=>dist(v,truth[c][i]))),ei=ind.flatMap((track,c)=>track.map((v,i)=>dist(v,truth[c][i])));
-  return {metrics:[['联合位置 RMSE',fmt(rmse(ej))+' m'],['独立滤波 RMSE',fmt(rmse(ei))+' m'],['有效相对测距',used+' 条'],['丢弃测距',dropped+' 条']],charts:[seriesChart('三车真值与联合估计',[...truth.map((v,c)=>xy(v,`车${c+1}真值`,colors[c])),...joint.map((v,c)=>xy(v,`车${c+1}联合`,colors[c+2]))],'测距每条仅更新一次；联合协方差含车辆间相关性。',true),seriesChart('中间车辆：独立与协同定位',[xy(truth[1],'真值',colors[0]),xy(ind[1],'独立',colors[1]),xy(joint[1],'协同',colors[2])]),seriesChart('中间车辆位置不确定度',[xy(uncertainty,'√trace(P)',colors[3])])],headers:['帧','车1东','车1北','车2东','车2北','车3东','车3北','累计有效测距','累计丢包'],rows,explain:'联合状态包含三辆车的二维位置，绝对 GNSS 更新与车间距离更新使用同一协方差矩阵。仅相对距离不能确定全局平移或旋转。'};
+  return {metrics:[['联合位置 RMSE',fmt(rmse(ej))+' m'],['独立滤波 RMSE',fmt(rmse(ei))+' m'],['有效相对测距',used+' 条'],['丢弃测距',dropped+' 条']],charts:[seriesChart('三车真值与联合估计',[...truth.map((v,c)=>xy(v,`车${c+1}真值`,colors[c])),...joint.map((v,c)=>xy(v,`车${c+1}联合`,colors[c+2]))],'测距每条仅更新一次；联合协方差含车辆间相关性。',true),seriesChart('中间车辆：独立与协同定位',[xy(truth[1],'真值',colors[0]),xy(ind[1],'独立',colors[1]),xy(joint[1],'协同',colors[2])]),seriesChart('中间车辆位置不确定度',[xy(uncertainty,'√trace(P)',colors[3])])],headers:['帧','车1东','车1北','车2东','车2北','车3东','车3北','累计有效测距','累计丢包'],rows,explain:'这是二维位置状态的简化联合滤波示意：利用GNSS位置观测和线性化的车间距离残差形成车辆间约束。当前版本未包含车辆速度状态及完整运动模型，因此不应将其理解为完整联合EKF；仅有相对距离也不能确定全局平移或旋转。'};
 }
 
 function sim7(p){
@@ -168,6 +170,24 @@ function sim7(p){
   return {metrics:[['侧向速度 RMSE',fmt(rmse(e),3)+' m/s'],['末端侧偏角',fmt(Math.atan2(ev,vx)*180/Math.PI)+'°'],['横摆角速度',fmt(er,3)+' rad/s'],['模型刚度偏差',p.stiffness+'%']],charts:[seriesChart('侧向速度：仿真真值与 KF 估计',[xy(truth,'独立真值',colors[0]),xy(est,'估计值',colors[2])],'仅适用于非零中等车速与小侧偏角。',true),seriesChart('前轮转角输入',[xy(steer,'转角 °',colors[1])]),seriesChart('横摆角速度：真值与估计',[xy(yawTruth,'真值',colors[0]),xy(yawEstimate,'估计',colors[2])]),seriesChart('质心侧偏角估计',[xy(beta,'β °',colors[3])])],headers:['时间 s','前轮角 °','真值 vy','估计 vy','真值 r','估计 r','估计 β °'],rows,explain:'二维单轨模型由前轮转角驱动，以横摆角速度和侧向加速度辅助状态更新。刚度失配选项用于观察模型偏差；不包含整车稳定性控制。'};
 }
 
+function sim7(p){
+  const r=rng(+p.seed),vx=+p.speed,mis=1+(+p.stiffness)/100,dt=.02,n=500,M=1300,Iz=2200,lf=1.2,lr=1.5,Cf=70000,Cr=80000;
+  const truth=[],est=[],steer=[],yawTruth=[],yawEstimate=[],beta=[],rows=[];let vy=0,yaw=0,xhat=[0,0],P=[[.5,0],[0,.2]];
+  const filterModel=(scale)=>{const cf=Cf*scale,cr=Cr*scale;return{A:[[-(cf+cr)/(M*vx),(-lf*cf+lr*cr)/(M*vx)-vx],[(lr*cr-lf*cf)/(Iz*vx),-(lf*lf*cf+lr*lr*cr)/(Iz*vx)]],B:[cf/M,lf*cf/Iz],H:[[-(cf+cr)/(M*vx),(-lf*cf+lr*cr)/(M*vx)+vx],[0,1]],D:[cf/M,0]};};
+  const plant=filterModel(mis),nom=filterModel(1),Ad=[[1+dt*nom.A[0][0],dt*nom.A[0][1]],[dt*nom.A[1][0],1+dt*nom.A[1][1]]],Bd=nom.B.map(v=>v*dt);
+  const scalarUpdate=(h,z,R)=>{const ph=P.map(row=>row[0]*h[0]+row[1]*h[1]),S=h[0]*ph[0]+h[1]*ph[1]+R,K=ph.map(v=>v/S),innovation=z-h[0]*xhat[0]-h[1]*xhat[1],prior=P.map(row=>[...row]);xhat=xhat.map((v,i)=>v+K[i]*innovation);P=P.map((row,i)=>row.map((v,j)=>prior[i][j]-K[i]*(h[0]*prior[0][j]+h[1]*prior[1][j])));};
+  for(let i=0;i<n;i++){
+    const t=i*dt,delta=(p.steer==='阶跃转向'?(t>1?.035:0):p.steer==='正弦转向'?.025*Math.sin(t*1.4):.045*Math.sin(t*1.2)*Math.exp(-Math.max(0,t-4)/4));
+    const [dvy,dr]=plant.A.map((row,k)=>row[0]*[vy,yaw][0]+row[1]*[vy,yaw][1]+plant.B[k]*delta);vy+=dvy*dt;yaw+=dr*dt;
+    xhat=[Ad[0][0]*xhat[0]+Ad[0][1]*xhat[1]+Bd[0]*delta,Ad[1][0]*xhat[0]+Ad[1][1]*xhat[1]+Bd[1]*delta];
+    const AP=Ad.map(row=>P[0].map((_,j)=>row.reduce((s,v,k)=>s+v*P[k][j],0)));P=AP.map((row,a)=>row.map((_,b)=>row.reduce((s,v,k)=>s+v*Ad[b][k],0)+(a===b?.002:.0002)));
+    const f=plant.A[0][0]*vy+plant.A[0][1]*yaw+plant.B[0]*delta,ay=f+vx*yaw+noise(r)*.035,measYaw=yaw+noise(r)*.004;
+    scalarUpdate(nom.H[1],measYaw,.004**2);scalarUpdate(nom.H[0],ay-nom.D[0]*delta,.035**2);
+    const estimatedBeta=Math.atan2(xhat[0],vx)*180/Math.PI;truth.push([t,vy]);est.push([t,xhat[0]]);steer.push([t,delta*180/Math.PI]);yawTruth.push([t,yaw]);yawEstimate.push([t,xhat[1]]);beta.push([t,estimatedBeta]);rows.push([fmt(t),fmt(delta*180/Math.PI),fmt(vy),fmt(xhat[0]),fmt(yaw),fmt(xhat[1]),fmt(estimatedBeta)]);
+  }
+  return {metrics:[],charts:[seriesChart('车辆横向状态：单轨模型与卡尔曼估计',[xy(truth,'模型状态',colors[0]),xy(est,'KF估计',colors[2])],'线性单轨模型；侧向速度由横摆角速度和侧向加速度观测更新。',true),seriesChart('前轮转角输入',[xy(steer,'前轮转角 °',colors[1])]),seriesChart('横摆角速度',[xy(yawTruth,'模型状态',colors[0]),xy(yawEstimate,'KF估计',colors[2])]),seriesChart('质心侧偏角估计',[xy(beta,'β估计 °',colors[3])])],headers:['时间 s','前轮角 °','模型vy','KF估计vy','模型r','KF估计r','估计β °'],rows,explain:'采用二自由度线性单轨模型和离散二维卡尔曼滤波，观测为横摆角速度与侧向加速度。侧偏刚度失配用于展示模型误差影响；该简化演示不代表实车参数辨识或控制系统。'};
+}
+
 function sim8(p){
   const r=rng(+p.seed),dt=.2,history=[],truth=[],rows=[];let x=0,y=0,v=2.4,h=0;
   for(let i=0;i<65;i++){const t=i*dt,mode=p.motion==='机动切换'?(i<35?'匀速':'协调转弯'):p.motion;if(mode==='匀加速')v+=.008;if(mode==='协调转弯')h+=.04;x+=v*dt*Math.cos(h);y+=v*dt*Math.sin(h);truth.push([x,y]);history.push([x+noise(r)*(+p.uncertainty),y+noise(r)*(+p.uncertainty)]);}
@@ -176,7 +196,7 @@ function sim8(p){
   const prior=history[k-15],priorVel=[prev[0]-older[0],prev[1]-older[1]],priorAcc=[prev[0]-2*older[0]+prior[0],prev[1]-2*older[1]+prior[1]];
   const likelihood=[0,1,2].map(j=>{let predicted=[prev[0]+priorVel[0],prev[1]+priorVel[1]];if(j===1)predicted=[predicted[0]+.5*priorAcc[0],predicted[1]+.5*priorAcc[1]];if(j===2){const a=.13;predicted=[prev[0]+priorVel[0]*Math.cos(a)-priorVel[1]*Math.sin(a),prev[1]+priorVel[0]*Math.sin(a)+priorVel[1]*Math.cos(a)];}const err=dist(predicted,now);return Math.exp(-err*err/(3+p.uncertainty*p.uncertainty))+.000001;}),sum=likelihood.reduce((a,b)=>a+b,0),probs=likelihood.map(v=>v/sum),selected=probs.indexOf(Math.max(...probs)),best=candidates[selected],future=truth.slice(k+1,k+H+1);
   const ade=mean(best.map((v,i)=>dist(v,future[i]))),fde=dist(best.at(-1),future.at(-1));for(let j=0;j<H;j++)rows.push([fmt((j+1)*dt),fmt(future[j][0]),fmt(future[j][1]),fmt(best[j][0]),fmt(best[j][1]),fmt(dist(best[j],future[j]))]);
-  return {metrics:[['预测 ADE',fmt(ade)+' m'],['预测 FDE',fmt(fde)+' m'],['主导模型',['匀速','匀加速','协调转弯'][selected]],['模型概率',probs.map(v=>fmt(v,2)).join(' / ')]],charts:[seriesChart('观测历史、三条候选航迹和未来真值',[xy(history.slice(0,k+1),'历史观测',colors[0]),...candidates.map((v,j)=>xy([now,...v],['匀速','匀加速','协调转弯'][j],colors[j+1])),xy(future,'评估真值',colors[4])],'未来真值只在误差评价中使用，不参与候选生成。',true),customChart('候选模型切换示意',(ctx,w,h,progress)=>{const names=['匀速','匀加速','协调转弯'];probs.forEach((v,j)=>{ctx.fillStyle=colors[j+1];ctx.fillRect(90,48+j*83,(w-180)*v*progress,35);ctx.fillStyle='#33485c';ctx.font='15px Arial';ctx.fillText(names[j],90,38+j*83);});})],headers:['预测时域 s','真值东','真值北','预测东','预测北','位置误差'],rows,explain:'根据历史观测生成匀速、加速和转弯候选，归一化得到模型权重并选择主导候选。此页未实现交互混合步骤，因此不称为 IMM。'};
+  return {metrics:[['预测 ADE',fmt(ade)+' m'],['预测 FDE',fmt(fde)+' m'],['主导模型',['匀速','匀加速','协调转弯'][selected]],['模型概率',probs.map(v=>fmt(v,2)).join(' / ')]],charts:[seriesChart('观测历史与短时候选航迹',[xy(history.slice(0,k+1),'历史观测',colors[0]),...candidates.map((v,j)=>xy([now,...v],['匀速','匀加速','协调转弯'][j],colors[j+1]))],'仅显示当前观测和向前推演的候选航迹；未来真值不进入预测画面。',true),customChart('候选模型权重示意',(ctx,w,h,progress)=>{const names=['匀速','匀加速','协调转弯'];probs.forEach((v,j)=>{ctx.fillStyle=colors[j+1];ctx.fillRect(90,48+j*83,(w-180)*v*progress,35);ctx.fillStyle='#33485c';ctx.font='15px Arial';ctx.fillText(names[j],90,38+j*83);});})],headers:['预测时域 s','参考轨迹东','参考轨迹北','预测东','预测北','位置误差'],rows,explain:'依据历史观测形成匀速、匀加速和协调转弯候选，再用一步预测残差构造启发式权重并选取主导模型。这里不是完整 IMM，模型权重仅作教学示意。'};
 }
 
 function sim9(p){
@@ -201,7 +221,7 @@ function sim10(p){
     acc.push([t,mag]);rows.push([fmt(t),fmt(mag),detected?'是':'否',steps,fmt(px),fmt(py),fmt(heading*180/Math.PI)]);
   }
   const end=estimate.at(-1)||[0,0],ref=truth.at(-1)||[0,0];
-  return {metrics:[['检测步数',steps+' 步'],['估计总距离',fmt(steps*(+p.stride))+' m'],['终点误差',fmt(dist(end,ref))+' m'],['磁场质量',p.magnetic==='开启'?'异常提示':'正常']],charts:[seriesChart('平面轨迹与独立检查点',[xy(truth,'测量路线',colors[0]),xy(estimate,'PDR 推算',colors[2])],'无连续位置真值时只比较已测检查点与终点。',true),seriesChart('加速度模长与检测峰值',[xy(acc,'模长 m/s²',colors[0]),xy(peaks,'有效步峰',colors[1])])],headers:['时间 s','加速度模长','有效步峰','累计步数','估计东 m','估计北 m','航向 °'],rows,explain:'先检测加速度峰值和最小步间隔，再按标定步长与航向逐步更新。磁场异常选项用于提示航向质量。真实系统需使用手机传感器时间戳、固定携带方式与独立测量路线。'};
+  return {metrics:[['检测步数',steps+' 步'],['估计总距离',fmt(steps*(+p.stride))+' m'],['终点误差',fmt(dist(end,ref))+' m'],['磁场质量',p.magnetic==='开启'?'异常提示':'正常']],charts:[seriesChart('平面轨迹与独立检查点',[xy(truth,'测量路线',colors[0]),xy(estimate,'PDR 推算',colors[2])],'无连续位置真值时只比较已测检查点与终点。',true),seriesChart('加速度模长与检测峰值',[xy(acc,'模长 m/s²',colors[0]),xy(peaks,'有效步峰',colors[1])])],headers:['时间 s','加速度模长','有效步峰','累计步数','估计东 m','估计北 m','航向 °'],rows,explain:'先检测加速度峰值和最小步间隔，再按标定步长与航向逐步更新。航向偏置选项在转弯阶段加入固定角度偏差，不含磁力计观测或磁场异常检测。真实系统需使用手机传感器时间戳、固定携带方式与独立测量路线。'};
 }
 
 const simulators={1:sim1,2:sim2,3:sim3,4:sim4,5:sim5,6:sim6,7:sim7,8:sim8,9:sim9,10:sim10};
