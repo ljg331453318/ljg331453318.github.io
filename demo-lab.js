@@ -20,7 +20,7 @@ const settings = {
   6:{subtitle:'三辆车的联合 EKF、相对测距与通信丢包',scope:'保留绝对 GNSS 约束和车辆交叉协方差；相对距离不等于绝对位置真值。',fields:[field('scenario','交通场景','select','转弯',{options:['直行','会车','转弯']}),field('loss','测距丢包率','select','10',{options:['0','10','30']}),field('outage','单车 GNSS 中断','select','开启',{options:['关闭','开启']}),field('seed','试验种子','number',52,{min:1,max:9999})]},
   7:{subtitle:'二自由度单轨模型、横摆观测与侧向状态 KF',scope:'限定中等非零车速、小转角与线性轮胎条件；低速近零时不计算侧偏角。',fields:[field('steer','转向工况','select','正弦转向',{options:['阶跃转向','正弦转向','模拟变道']}),field('speed','纵向速度 m/s','select','10',{options:['5','10','15']}),field('stiffness','侧偏刚度失配 %','range',0,{min:-20,max:20,step:5}),field('seed','试验种子','number',87,{min:1,max:9999})]},
   8:{subtitle:'匀速、匀加速和协调转弯候选模型的短时预测',scope:'根据当前与过去观测形成候选；真值只用于事后误差评估，不称为完整 IMM。',fields:[field('motion','测试机动','select','协调转弯',{options:['匀速','匀加速','协调转弯','机动切换']}),field('horizon','预测时域 s','select','3',{options:['1','2','3']}),field('uncertainty','观测噪声 m','range',0.8,{min:0.1,max:3,step:0.1}),field('seed','试验种子','number',64,{min:1,max:9999})]},
-  9:{subtitle:'单图检测、置信度筛选、批量统计与 CSV 导出',scope:'使用合成遥感样例演示检测流程。此处是图像处理原型，不能替代训练后的船舶检测模型或独立测试集 AP50。',fields:[field('scene','影像场景','select','近岸',{options:['开阔水域','近岸','港区','无船']}),field('size','输入尺寸 px','select','512',{options:['512','768']}),field('confidence','置信度阈值','range',0.55,{min:0.1,max:0.95,step:0.05}),field('seed','样例种子','number',12,{min:1,max:9999})]},
+  9:{subtitle:'单图扫描、船舶框选与批量处理界面示意',scope:'使用合成遥感样例演示检测流程。此处是图像处理原型，不能替代训练后的船舶检测模型或独立测试集 AP50。',fields:[field('scene','影像场景','select','近岸',{options:['开阔水域','近岸','港区','无船']}),field('size','输入尺寸 px','select','512',{options:['512','768']}),field('confidence','置信度阈值','range',0.55,{min:0.1,max:0.95,step:0.05}),field('seed','样例种子','number',12,{min:1,max:9999})]},
   10:{subtitle:'加速度峰值计步、步长标定、航向融合与轨迹推算',scope:'固定携带方式；使用合成加速度/航向序列。无连续真值时只核对检查点和终点。',fields:[field('route','步行路线','select','矩形闭环',{options:['直线','矩形闭环','含转弯']}),field('stride','标定步长 m','range',0.7,{min:0.4,max:1,step:0.02}),field('threshold','计步峰值阈值','range',1.15,{min:0.4,max:2,step:0.05}),field('magnetic','磁场异常','select','关闭',{options:['关闭','开启']}),field('seed','试验种子','number',29,{min:1,max:9999})]}
 };
 
@@ -45,7 +45,15 @@ function sim1(p){
     gr+=gR*dt;roll.push(truthR);pitch.push(truthP);yaw.push(truthY);gyroRoll.push(gr);fusedRoll.push(fr);fusedPitch.push(fp);fusedYaw.push(fy);raw.push([fmt(t),fmt(truthR),fmt(gR),fmt(ax),fmt(ay),fmt(az),fmt(fr),fmt(fp),fmt(fy)]);prevR=truthR;prevP=truthP;prevY=truthY;
   }
   const e=roll.map((v,i)=>v-fusedRoll[i]),ep=pitch.map((v,i)=>v-fusedPitch[i]);
-  const attitude=customChart('三维姿态与坐标轴',(ctx,w,h)=>{const phi=fusedRoll.at(-1)*Math.PI/180,theta=fusedPitch.at(-1)*Math.PI/180,psi=fusedYaw.at(-1)*Math.PI/180;const rotate=([x,y,z])=>{let X=x*Math.cos(psi)-y*Math.sin(psi),Y=x*Math.sin(psi)+y*Math.cos(psi);let Z=-X*Math.sin(theta)+z*Math.cos(theta);X=X*Math.cos(theta)+z*Math.sin(theta);return [X,Y*Math.cos(phi)-Z*Math.sin(phi),Y*Math.sin(phi)+Z*Math.cos(phi)];};const project=point=>{const [x,y,z]=rotate(point);return [w/2+(x-y)*1.35,h/2+(x+y)*.5-z*1.6];};const arm=(a,b,color)=>{const A=project(a),B=project(b);ctx.strokeStyle=color;ctx.lineWidth=12;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(...A);ctx.lineTo(...B);ctx.stroke();};arm([-80,0,0],[80,0,0],colors[0]);arm([0,-80,0],[0,80,0],colors[2]);arm([0,0,-45],[0,0,45],colors[1]);ctx.fillStyle='#173d60';ctx.beginPath();ctx.arc(...project([0,0,0]),13,0,2*Math.PI);ctx.fill();ctx.font='16px Arial';ctx.fillText(`Roll ${fmt(fusedRoll.at(-1),1)}° · Pitch ${fmt(fusedPitch.at(-1),1)}° · Yaw ${fmt(fusedYaw.at(-1),1)}°`,30,40);},'偏航为相对初始方向，六轴 IMU 不能提供绝对航向。');
+  const attitude=customChart('三维姿态与坐标轴',(ctx,w,h,progress)=>{
+    const sample=Math.min(fusedRoll.length-1,Math.floor(progress*(fusedRoll.length-1)));
+    const phi=fusedRoll[sample]*Math.PI/180,theta=fusedPitch[sample]*Math.PI/180,psi=fusedYaw[sample]*Math.PI/180;
+    const rotate=([x,y,z])=>{let X=x*Math.cos(psi)-y*Math.sin(psi),Y=x*Math.sin(psi)+y*Math.cos(psi);let Z=-X*Math.sin(theta)+z*Math.cos(theta);X=X*Math.cos(theta)+z*Math.sin(theta);return [X,Y*Math.cos(phi)-Z*Math.sin(phi),Y*Math.sin(phi)+Z*Math.cos(phi)];};
+    const project=point=>{const [x,y,z]=rotate(point);return [w/2+(x-y)*1.35,h/2+(x+y)*.5-z*1.6];};
+    const arm=(a,b,color)=>{const A=project(a),B=project(b);ctx.strokeStyle=color;ctx.lineWidth=12;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(...A);ctx.lineTo(...B);ctx.stroke();};
+    arm([-80,0,0],[80,0,0],colors[0]);arm([0,-80,0],[0,80,0],colors[2]);arm([0,0,-45],[0,0,45],colors[1]);
+    ctx.fillStyle='#173d60';ctx.beginPath();ctx.arc(...project([0,0,0]),13,0,2*Math.PI);ctx.fill();ctx.font='16px Arial';ctx.fillText('机体三维姿态实时示意',30,40);
+  },'偏航为相对初始方向，六轴 IMU 不能提供绝对航向。');
   return {metrics:[['横滚 RMSE',fmt(rmse(e))+'°'],['俯仰 RMSE',fmt(rmse(ep))+'°'],['采样率','100 Hz'],['纯陀螺末端误差',fmt(Math.abs(gyroRoll.at(-1)-roll.at(-1)))+'°']],charts:[seriesChart('横滚角：真值、Mahony 四元数估计与纯积分',[xy(toPoints(roll),'合成参考',colors[0]),xy(toPoints(fusedRoll),'Mahony',colors[2]),xy(toPoints(gyroRoll),'纯陀螺积分',colors[1])],'静态角度参考须由角度夹具独立提供。',true),attitude,seriesChart('俯仰角与相对偏航',[xy(toPoints(pitch),'参考俯仰',colors[0]),xy(toPoints(fusedPitch),'估计俯仰',colors[2]),xy(toPoints(fusedYaw),'相对偏航',colors[1])])],headers:['时间 s','参考横滚 °','角速度 °/s','加计 x g','加计 y g','加计 z g','估计横滚 °','估计俯仰 °','估计偏航 °'],rows:raw,explain:'以 100 Hz 对合成角速度作四元数积分和归一化，用重力方向反馈校正横滚与俯仰；非重力加速度较大时降低校正权重。真实样机仍须完成 I²C/SPI 采集、串口协议、角度夹具和端到端延迟验证。'};
 }
 
@@ -161,7 +169,7 @@ function sim8(p){
   const prior=history[k-15],priorVel=[prev[0]-older[0],prev[1]-older[1]],priorAcc=[prev[0]-2*older[0]+prior[0],prev[1]-2*older[1]+prior[1]];
   const likelihood=[0,1,2].map(j=>{let predicted=[prev[0]+priorVel[0],prev[1]+priorVel[1]];if(j===1)predicted=[predicted[0]+.5*priorAcc[0],predicted[1]+.5*priorAcc[1]];if(j===2){const a=.13;predicted=[prev[0]+priorVel[0]*Math.cos(a)-priorVel[1]*Math.sin(a),prev[1]+priorVel[0]*Math.sin(a)+priorVel[1]*Math.cos(a)];}const err=dist(predicted,now);return Math.exp(-err*err/(3+p.uncertainty*p.uncertainty))+.000001;}),sum=likelihood.reduce((a,b)=>a+b,0),probs=likelihood.map(v=>v/sum),selected=probs.indexOf(Math.max(...probs)),best=candidates[selected],future=truth.slice(k+1,k+H+1);
   const ade=mean(best.map((v,i)=>dist(v,future[i]))),fde=dist(best.at(-1),future.at(-1));for(let j=0;j<H;j++)rows.push([fmt((j+1)*dt),fmt(future[j][0]),fmt(future[j][1]),fmt(best[j][0]),fmt(best[j][1]),fmt(dist(best[j],future[j]))]);
-  return {metrics:[['预测 ADE',fmt(ade)+' m'],['预测 FDE',fmt(fde)+' m'],['主导模型',['匀速','匀加速','协调转弯'][selected]],['模型概率',probs.map(v=>fmt(v,2)).join(' / ')]],charts:[seriesChart('观测历史、三条候选航迹和未来真值',[xy(history.slice(0,k+1),'历史观测',colors[0]),...candidates.map((v,j)=>xy([now,...v],['匀速','匀加速','协调转弯'][j],colors[j+1])),xy(future,'评估真值',colors[4])],'未来真值只在误差评价中使用，不参与候选生成。',true),customChart('候选模型概率',(ctx,w,h)=>{const names=['匀速','匀加速','协调转弯'];probs.forEach((v,j)=>{ctx.fillStyle=colors[j+1];ctx.fillRect(90,48+j*83,(w-180)*v,35);ctx.fillStyle='#33485c';ctx.font='15px Arial';ctx.fillText(names[j]+' '+fmt(v,3),90,38+j*83);});})],headers:['预测时域 s','真值东','真值北','预测东','预测北','位置误差'],rows,explain:'根据历史观测生成匀速、加速和转弯候选，归一化得到模型权重并选择主导候选。此页未实现交互混合步骤，因此不称为 IMM。'};
+  return {metrics:[['预测 ADE',fmt(ade)+' m'],['预测 FDE',fmt(fde)+' m'],['主导模型',['匀速','匀加速','协调转弯'][selected]],['模型概率',probs.map(v=>fmt(v,2)).join(' / ')]],charts:[seriesChart('观测历史、三条候选航迹和未来真值',[xy(history.slice(0,k+1),'历史观测',colors[0]),...candidates.map((v,j)=>xy([now,...v],['匀速','匀加速','协调转弯'][j],colors[j+1])),xy(future,'评估真值',colors[4])],'未来真值只在误差评价中使用，不参与候选生成。',true),customChart('候选模型切换示意',(ctx,w,h,progress)=>{const names=['匀速','匀加速','协调转弯'];probs.forEach((v,j)=>{ctx.fillStyle=colors[j+1];ctx.fillRect(90,48+j*83,(w-180)*v*progress,35);ctx.fillStyle='#33485c';ctx.font='15px Arial';ctx.fillText(names[j],90,38+j*83);});})],headers:['预测时域 s','真值东','真值北','预测东','预测北','位置误差'],rows,explain:'根据历史观测生成匀速、加速和转弯候选，归一化得到模型权重并选择主导候选。此页未实现交互混合步骤，因此不称为 IMM。'};
 }
 
 function sim9(p){
@@ -172,8 +180,8 @@ function sim9(p){
   if(scene==='港区'){for(let y=8;y<14;y++)for(let x=5;x<14;x++)pixels[index(x,y)]=232;}
   const seen=new Uint8Array(W*H),candidates=[];for(let y=0;y<H;y++)for(let x=0;x<W;x++){const start=index(x,y);if(seen[start]||pixels[start]<218)continue;const queue=[start];seen[start]=1;let minx=x,maxx=x,miny=y,maxy=y,sum=0;for(let head=0;head<queue.length;head++){const v=queue[head],cx=v%W,cy=Math.floor(v/W);sum+=pixels[v];minx=Math.min(minx,cx);maxx=Math.max(maxx,cx);miny=Math.min(miny,cy);maxy=Math.max(maxy,cy);for(const [nx,ny] of [[cx-1,cy],[cx+1,cy],[cx,cy-1],[cx,cy+1]]){if(nx<0||ny<0||nx>=W||ny>=H)continue;const k=index(nx,ny);if(!seen[k]&&pixels[k]>=218){seen[k]=1;queue.push(k);}}}if(queue.length<5)continue;const width=maxx-minx+1,height=maxy-miny+1,aspect=width/Math.max(height,1),confidence=clamp(.43+.055*aspect+.006*queue.length+.001*(sum/queue.length-218),.1,.99);candidates.push({x:minx,y:miny,w:width,h:height,conf:confidence});}
   const filtered=candidates.filter(o=>o.conf>=+p.confidence),rows=filtered.map((o,i)=>[i+1,o.x,o.y,o.w,o.h,fmt(o.conf),scene]);
-  const image=customChart('合成遥感图像的像素连通域检测',(ctx,w,h)=>{const temp=document.createElement('canvas');temp.width=W;temp.height=H;const tctx=temp.getContext('2d'),data=tctx.createImageData(W,H);for(let i=0;i<pixels.length;i++){const v=pixels[i];data.data[4*i]=v-20;data.data[4*i+1]=v;data.data[4*i+2]=Math.min(255,v+12);data.data[4*i+3]=255;}tctx.putImageData(data,0,0);ctx.imageSmoothingEnabled=true;ctx.drawImage(temp,0,0,w,h);ctx.lineWidth=2;filtered.forEach(o=>{ctx.strokeStyle='#17856c';ctx.strokeRect(o.x/W*w,o.y/H*h,o.w/W*w,o.h/H*h);ctx.fillStyle='#155b4c';ctx.font='13px Arial';ctx.fillText(fmt(o.conf),o.x/W*w,Math.max(13,o.y/H*h-5));});},'框由像素阈值与连通域运算产生；只用于演示检测流程，不能替代训练后的模型。',true);
-  return {metrics:[['检测框数',filtered.length+' 个'],['连通域候选',candidates.length+' 个'],['置信度门限',fmt(p.confidence)],['输入规格',p.size+' px']],charts:[image,customChart('批量样本组成示意',(ctx,w,h)=>{const labels=['空白水域','单船','多船'],counts=scene==='无船'?[5,0,0]:[2,4,3];labels.forEach((s,i)=>{ctx.fillStyle=colors[i];ctx.fillRect(65,60+i*76,(w-150)*counts[i]/6,28);ctx.fillStyle='#3b5267';ctx.font='14px Arial';ctx.fillText(`${s}: ${counts[i]}`,65,48+i*76);});})],headers:['编号','左上角 x','左上角 y','宽','高','示意置信度','场景'],rows,explain:'本演示在合成像素图上实际执行阈值分割与连通域定位。真实毕业设计需从 Airbus 标注解码 RLE、按影像划分训练/验证/测试集，迁移训练轻量检测模型，并在独立测试集报告 AP50、查准率、查全率与耗时。'};
+  const image=customChart('遥感图像扫描与船舶框选示意',(ctx,w,h,progress)=>{const temp=document.createElement('canvas');temp.width=W;temp.height=H;const tctx=temp.getContext('2d'),data=tctx.createImageData(W,H);for(let i=0;i<pixels.length;i++){const v=pixels[i];data.data[4*i]=v-20;data.data[4*i+1]=v;data.data[4*i+2]=Math.min(255,v+12);data.data[4*i+3]=255;}tctx.putImageData(data,0,0);ctx.imageSmoothingEnabled=true;ctx.drawImage(temp,0,0,w,h);ctx.fillStyle='rgba(255,255,255,.60)';ctx.fillRect(0,progress*h,w,(1-progress)*h);ctx.strokeStyle='#155b4c';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(0,progress*h);ctx.lineTo(w,progress*h);ctx.stroke();filtered.filter(o=>o.y+o.h<=progress*H).forEach(o=>{ctx.strokeStyle='#17856c';ctx.lineWidth=2;ctx.strokeRect(o.x/W*w,o.y/H*h,o.w/W*w,o.h/H*h);});},'扫描与框选为合成画面示意；真实毕业设计须训练并测试检测模型。',true);
+  return {metrics:[['检测框数',filtered.length+' 个'],['连通域候选',candidates.length+' 个'],['置信度门限',fmt(p.confidence)],['输入规格',p.size+' px']],charts:[image,customChart('批量处理流程',(ctx,w,h,progress)=>{const labels=['导入影像','逐张扫描','保存标注','导出记录'],active=Math.min(3,Math.floor(progress*4));ctx.font='16px Arial';labels.forEach((label,i)=>{const x=45+i*(w-90)/4,boxW=(w-120)/4;ctx.fillStyle=i<=active?'#e8f0f5':'#fff';ctx.fillRect(x,120,boxW,70);ctx.strokeStyle=i<=active?'#155b82':'#cbd8e0';ctx.lineWidth=2;ctx.strokeRect(x,120,boxW,70);ctx.fillStyle='#2d4e66';ctx.fillText(label,x+18,162);if(i<3){ctx.fillStyle='#8aa1b0';ctx.fillText('→',x+boxW+8,162);}});},'学生需实现单图检测、批量处理、标注保存和记录导出。')],headers:['编号','左上角 x','左上角 y','宽','高','示意置信度','场景'],rows,explain:'本演示在合成像素图上实际执行阈值分割与连通域定位。真实毕业设计需从 Airbus 标注解码 RLE、按影像划分训练/验证/测试集，迁移训练轻量检测模型，并在独立测试集报告 AP50、查准率、查全率与耗时。'};
 }
 
 function sim10(p){
@@ -191,14 +199,14 @@ function sim10(p){
 
 const simulators={1:sim1,2:sim2,3:sim3,4:sim4,5:sim5,6:sim6,7:sim7,8:sim8,9:sim9,10:sim10};
 
-function drawLineChart(canvas,series){
+function drawLineChart(canvas,series,progress=1){
   const ctx=canvas.getContext('2d'),w=canvas.width,h=canvas.height,pad={l:48,r:18,t:22,b:34};ctx.clearRect(0,0,w,h);ctx.fillStyle='#fff';ctx.fillRect(0,0,w,h);
   const valid=series.flatMap(s=>s.values).filter(v=>v&&Number.isFinite(v[0])&&Number.isFinite(v[1]));if(!valid.length)return;
   let xmin=Math.min(...valid.map(v=>v[0])),xmax=Math.max(...valid.map(v=>v[0])),ymin=Math.min(...valid.map(v=>v[1])),ymax=Math.max(...valid.map(v=>v[1]));if(xmax===xmin)xmax++;if(ymax===ymin)ymax++;
   const xm=(xmax-xmin)*.04,ym=(ymax-ymin)*.08;xmin-=xm;xmax+=xm;ymin-=ym;ymax+=ym;const X=x=>pad.l+(x-xmin)/(xmax-xmin)*(w-pad.l-pad.r),Y=y=>h-pad.b-(y-ymin)/(ymax-ymin)*(h-pad.t-pad.b);
-  ctx.font='12px Arial';ctx.lineWidth=1;for(let j=0;j<=4;j++){let yy=pad.t+(h-pad.t-pad.b)*j/4;ctx.strokeStyle='#e6edf1';ctx.beginPath();ctx.moveTo(pad.l,yy);ctx.lineTo(w-pad.r,yy);ctx.stroke();ctx.fillStyle='#6b7d8d';ctx.fillText(fmt(ymax-(ymax-ymin)*j/4,1),5,yy+4);}
-  for(let j=0;j<=4;j++){let xx=pad.l+(w-pad.l-pad.r)*j/4;ctx.strokeStyle='#e6edf1';ctx.beginPath();ctx.moveTo(xx,pad.t);ctx.lineTo(xx,h-pad.b);ctx.stroke();ctx.fillStyle='#6b7d8d';ctx.fillText(fmt(xmin+(xmax-xmin)*j/4,1),xx-12,h-10);}
-  series.forEach(s=>{ctx.strokeStyle=s.color;ctx.lineWidth=s.values.length<8?2.5:1.8;ctx.beginPath();let started=false;for(const value of s.values){if(!value||!Number.isFinite(value[1])){started=false;continue;}const x=X(value[0]),y=Y(value[1]);if(!started){ctx.moveTo(x,y);started=true;}else ctx.lineTo(x,y);}ctx.stroke();if(s.values.length<9)s.values.forEach(v=>{ctx.beginPath();ctx.arc(X(v[0]),Y(v[1]),4,0,2*Math.PI);ctx.fillStyle=s.color;ctx.fill();});});
+  ctx.lineWidth=1;for(let j=0;j<=4;j++){let yy=pad.t+(h-pad.t-pad.b)*j/4;ctx.strokeStyle='#e6edf1';ctx.beginPath();ctx.moveTo(pad.l,yy);ctx.lineTo(w-pad.r,yy);ctx.stroke();}
+  for(let j=0;j<=4;j++){let xx=pad.l+(w-pad.l-pad.r)*j/4;ctx.strokeStyle='#e6edf1';ctx.beginPath();ctx.moveTo(xx,pad.t);ctx.lineTo(xx,h-pad.b);ctx.stroke();}
+  series.forEach(s=>{const position=progress*Math.max(0,s.values.length-1),whole=Math.floor(position),fraction=position-whole,visible=s.values.slice(0,whole+1);if(fraction>0&&s.values[whole]&&s.values[whole+1]){const a=s.values[whole],b=s.values[whole+1];visible.push([a[0]+fraction*(b[0]-a[0]),a[1]+fraction*(b[1]-a[1])]);}ctx.strokeStyle=s.color;ctx.lineWidth=s.values.length<8?2.5:1.8;ctx.beginPath();let started=false;for(const value of visible){if(!value||!Number.isFinite(value[1])){started=false;continue;}const x=X(value[0]),y=Y(value[1]);if(!started){ctx.moveTo(x,y);started=true;}else ctx.lineTo(x,y);}ctx.stroke();const last=[...visible].reverse().find(v=>v&&Number.isFinite(v[1]));if(last){ctx.beginPath();ctx.arc(X(last[0]),Y(last[1]),5,0,2*Math.PI);ctx.fillStyle=s.color;ctx.fill();}});
 }
 
 function htmlEscape(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
@@ -206,9 +214,53 @@ function fieldHtml(f){const common=`id="field-${f.key}" data-key="${f.key}"`;if(
 function params(){const out={};settings[id].fields.forEach(f=>out[f.key]=document.getElementById('field-'+f.key).value);return out;}
 function csvDownload(headers,rows){const csv='\ufeff'+[headers,...rows].map(row=>row.map(v=>`"${String(v).replaceAll('"','""')}"`).join(',')).join('\r\n');const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download=`graduation-demo-${String(id).padStart(2,'0')}.csv`;a.click();setTimeout(()=>URL.revokeObjectURL(url),5000);}
 let lastResult;
-function renderRun(){const result=simulators[id](params());lastResult=result;document.getElementById('metrics').innerHTML=result.metrics.map(([name,value])=>`<div class="metric"><span>${htmlEscape(name)}</span><strong>${htmlEscape(value)}</strong></div>`).join('');document.getElementById('charts').innerHTML=result.charts.map((c,j)=>`<section class="chart ${c.wide?'wide':''}"><h3>${htmlEscape(c.title)}</h3><canvas id="chart-${j}" width="800" height="350"></canvas>${c.type==='lines'?`<div class="legend">${c.series.map(s=>`<span><i style="background:${s.color}"></i>${htmlEscape(s.name)}</span>`).join('')}</div>`:''}${c.note?`<p class="chart-note">${htmlEscape(c.note)}</p>`:''}</section>`).join('');result.charts.forEach((c,j)=>{const canvas=document.getElementById(`chart-${j}`);if(c.type==='lines')drawLineChart(canvas,c.series);else c.draw(canvas.getContext('2d'),canvas.width,canvas.height);});document.getElementById('explain').textContent=result.explain;document.getElementById('table').innerHTML=`<thead><tr>${result.headers.map(h=>`<th>${htmlEscape(h)}</th>`).join('')}</tr></thead><tbody>${result.rows.slice(0,18).map(row=>`<tr>${row.map(v=>`<td>${htmlEscape(v)}</td>`).join('')}</tr>`).join('')}</tbody>`;document.getElementById('status').textContent=`已生成 ${result.rows.length} 条模拟记录`;}
+let progress=0;
+let playing=true;
+let lastFrame=0;
+let lastPaint=0;
 
-async function boot(){if(!settings[id]){root.textContent='未找到演示题目。';return;}const response=await fetch('../grad-topics.json');const topics=await response.json(),topic=topics.find(v=>v.id===id),cfg=settings[id];document.title=topic.title+' · 独立演示';document.getElementById('page-title').textContent=topic.title;document.getElementById('page-subtitle').textContent=cfg.subtitle;document.getElementById('page-scope').textContent=cfg.scope;
-  root.innerHTML=`<div class="lab"><aside class="controls panel"><h2>场景与参数</h2>${cfg.fields.map(fieldHtml).join('')}<div class="buttons"><button id="run">运行 / 更新</button><button id="export" class="secondary">导出 CSV</button></div><div class="control-help"><strong>与设计任务对应</strong><p>${htmlEscape(topic.sections['设计任务1'])}</p><p>${htmlEscape(topic.sections['设计任务2'])}</p></div></aside><div class="results"><div class="results-top"><h2>交互结果</h2><p class="status" id="status"></p></div><div id="metrics" class="metric-grid"></div><div id="charts" class="plot-grid"></div><div class="explain"><strong>方法与边界　</strong><span id="explain"></span></div><div class="panel" style="padding:15px"><h2 style="font-size:15px;color:#173d60;margin:0">模拟数据记录（前 18 行）</h2><div class="data-table-wrap"><table class="data-table" id="table"></table></div></div></div></div>`;
-  document.getElementById('run').onclick=renderRun;document.getElementById('export').onclick=()=>csvDownload(lastResult.headers,lastResult.rows);cfg.fields.forEach(f=>{const el=document.getElementById('field-'+f.key);el.addEventListener('input',()=>{const v=document.getElementById('value-'+f.key);if(v)v.textContent=el.value;});el.addEventListener('change',renderRun);});renderRun();}
+function paint() {
+  if (!lastResult) return;
+  lastResult.charts.forEach((chart,index) => {
+    const canvas=document.getElementById(`chart-${index}`);
+    if (chart.type==='lines') drawLineChart(canvas,chart.series,progress);
+    else {const ctx=canvas.getContext('2d');ctx.clearRect(0,0,canvas.width,canvas.height);chart.draw(ctx,canvas.width,canvas.height,progress);}
+  });
+  document.getElementById('timeline').value=String(Math.round(progress*1000));
+  document.getElementById('timeline-value').textContent=Math.round(progress*100)+'%';
+  document.getElementById('play-state').textContent=playing?'演示运行中':'已暂停';
+  document.getElementById('play-toggle').textContent=playing?'暂停':'播放';
+}
+
+function animate(now) {
+  const elapsed=lastFrame?Math.min(Math.max(now-lastFrame,0),100):0;
+  lastFrame=now;
+  if (playing && lastResult) {
+    progress+=elapsed*Number(document.getElementById('speed').value)/12000;
+    if (progress>=1) progress=0;
+  }
+  if (now-lastPaint>50) {paint();lastPaint=now;}
+  requestAnimationFrame(animate);
+}
+
+function renderRun() {
+  lastResult=simulators[id](params());
+  document.getElementById('charts').innerHTML=lastResult.charts.map((chart,index)=>`<section class="chart ${chart.wide?'wide':''}"><h3>${htmlEscape(chart.title)}</h3><canvas id="chart-${index}" width="800" height="350"></canvas>${chart.type==='lines'?`<div class="legend">${chart.series.map(series=>`<span><i style="background:${series.color}"></i>${htmlEscape(series.name)}</span>`).join('')}</div>`:''}${chart.note?`<p class="chart-note">${htmlEscape(chart.note)}</p>`:''}</section>`).join('');
+  progress=0;
+  playing=true;
+  paint();
+}
+
+async function boot(){if(!settings[id]){root.textContent='未找到演示题目。';return;}const [topics,references]=await Promise.all([fetch('../grad-topics.json').then(r=>r.json()),fetch('../grad-references.json').then(r=>r.json())]);const topic=topics.find(v=>v.id===id),cfg=settings[id];document.title=topic.title+' · 动态演示';document.getElementById('page-title').textContent=topic.title;document.getElementById('page-subtitle').textContent=cfg.subtitle;document.getElementById('page-scope').textContent=cfg.scope;
+  const cited=new Set();for(const match of topic.sections['研究依据与适用性'].matchAll(/\[(\d+)(?:\s*[-–]\s*(\d+))?\]/g)){for(let number=Number(match[1]);number<=Number(match[2]||match[1]);number++)cited.add(number);}
+  const relevant=references.filter(value=>cited.has(Number(value.match(/^\[(\d+)\]/)?.[1])));
+  root.innerHTML=`<div class="lab"><aside class="controls panel"><h2>场景与参数</h2>${cfg.fields.map(fieldHtml).join('')}<div class="buttons"><button id="run">重新演示</button></div><div class="control-help"><strong>需要完成的设计任务</strong><p>${htmlEscape(topic.sections['设计任务1'])}</p><p>${htmlEscape(topic.sections['设计任务2'])}</p><p>${htmlEscape(topic.sections['设计任务3'])}</p></div></aside><div class="results"><div class="results-top"><h2>动态界面示意</h2><p class="status">合成场景 · 非毕业设计结果</p></div><div class="playback"><button id="play-toggle" type="button">暂停</button><button id="rewind" type="button" class="secondary">重置</button><span class="play-state" id="play-state">演示运行中</span><input id="timeline" type="range" min="0" max="1000" value="0" aria-label="播放进度"><output id="timeline-value">0%</output><select id="speed" aria-label="播放速度"><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option></select></div><div id="charts" class="plot-grid"></div><div class="explain"><strong>设计提示　</strong>${htmlEscape(topic.sections['验证与评价'])}</div></div></div><section class="demo-references"><h2>参考文献与技术资料</h2>${relevant.map(value=>`<p>${htmlEscape(value).replace(/https:\/\/[^\s]+/g,url=>`<a href="${url}" target="_blank" rel="noopener">${url}</a>`)}</p>`).join('')}</section>`;
+  document.getElementById('run').onclick=renderRun;
+  document.getElementById('play-toggle').onclick=()=>{playing=!playing;paint();};
+  document.getElementById('rewind').onclick=()=>{progress=0;playing=false;paint();};
+  document.getElementById('timeline').oninput=event=>{playing=false;progress=Number(event.target.value)/1000;paint();};
+  cfg.fields.forEach(f=>{const el=document.getElementById('field-'+f.key);el.addEventListener('input',()=>{const v=document.getElementById('value-'+f.key);if(v)v.textContent=el.value;});el.addEventListener('change',renderRun);});
+  renderRun();
+  requestAnimationFrame(animate);
+}
 boot().catch(error=>{root.textContent='演示加载失败：'+error.message;console.error(error);});
