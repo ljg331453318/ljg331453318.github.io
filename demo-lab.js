@@ -50,10 +50,17 @@ function sim1(p){
     const phi=fusedRoll[sample]*Math.PI/180,theta=fusedPitch[sample]*Math.PI/180,psi=fusedYaw[sample]*Math.PI/180;
     const rotate=([x,y,z])=>{let X=x*Math.cos(psi)-y*Math.sin(psi),Y=x*Math.sin(psi)+y*Math.cos(psi);let Z=-X*Math.sin(theta)+z*Math.cos(theta);X=X*Math.cos(theta)+z*Math.sin(theta);return [X,Y*Math.cos(phi)-Z*Math.sin(phi),Y*Math.sin(phi)+Z*Math.cos(phi)];};
     const project=point=>{const [x,y,z]=rotate(point);return [w/2+(x-y)*1.35,h/2+(x+y)*.5-z*1.6];};
-    const arm=(a,b,color)=>{const A=project(a),B=project(b);ctx.strokeStyle=color;ctx.lineWidth=12;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(...A);ctx.lineTo(...B);ctx.stroke();};
-    arm([-80,0,0],[80,0,0],colors[0]);arm([0,-80,0],[0,80,0],colors[2]);arm([0,0,-45],[0,0,45],colors[1]);
-    ctx.fillStyle='#173d60';ctx.beginPath();ctx.arc(...project([0,0,0]),13,0,2*Math.PI);ctx.fill();ctx.font='16px Arial';ctx.fillText('机体三维姿态实时示意',30,40);
-  },'偏航为相对初始方向，六轴 IMU 不能提供绝对航向。');
+    const scale=Math.min(w/520,h/310)*1.25;
+    const screen=point=>{const p=project(point);return [w/2+(p[0]-w/2)*scale,h/2+(p[1]-h/2)*scale];};
+    const line=(a,b,color,width=8)=>{const A=screen(a),B=screen(b);ctx.strokeStyle=color;ctx.lineWidth=width;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(...A);ctx.lineTo(...B);ctx.stroke();};
+    const rotors=[[-74,-56,0],[74,-56,0],[-74,56,0],[74,56,0]];
+    // Four-arm airframe, motor pods and propellers rotate with the estimated attitude.
+    rotors.forEach((r,i)=>{line([0,0,0],r,i<2?'#64748b':'#94a3b8',11);const [x,y]=screen(r);ctx.fillStyle='#dbeafe';ctx.strokeStyle='#334155';ctx.lineWidth=2;ctx.beginPath();ctx.arc(x,y,19*scale,0,2*Math.PI);ctx.fill();ctx.stroke();ctx.strokeStyle=i%2?'#0f766e':'#2563eb';ctx.lineWidth=3;ctx.beginPath();ctx.ellipse(x,y,26*scale,4*scale,phi*.3,0,2*Math.PI);ctx.stroke();});
+    const body=screen([0,0,0]);ctx.fillStyle='#1e3a5f';ctx.strokeStyle='#0f172a';ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(body[0],body[1],24*scale,16*scale,psi*.15,0,2*Math.PI);ctx.fill();ctx.stroke();
+    const nose=screen([0,-27,5]);ctx.fillStyle='#ef4444';ctx.beginPath();ctx.arc(nose[0],nose[1],4*scale,0,2*Math.PI);ctx.fill();
+    ctx.fillStyle='#1d1d1f';ctx.font='600 15px -apple-system, sans-serif';ctx.fillText('四旋翼机体 · 姿态估计实时示意',22,30);
+    ctx.fillStyle='#6e6e73';ctx.font='12px -apple-system, sans-serif';ctx.fillText(`横滚 ${fmt(fusedRoll[sample],1)}°   俯仰 ${fmt(fusedPitch[sample],1)}°   相对偏航 ${fmt(fusedYaw[sample],1)}°`,22,52);
+  },'机体姿态由合成 IMU 数据驱动；这是姿态测量原理动画，不代表真实飞行器或飞控闭环。');
   return {metrics:[['横滚 RMSE',fmt(rmse(e))+'°'],['俯仰 RMSE',fmt(rmse(ep))+'°'],['采样率','100 Hz'],['纯陀螺末端误差',fmt(Math.abs(gyroRoll.at(-1)-roll.at(-1)))+'°']],charts:[seriesChart('横滚角：真值、Mahony 四元数估计与纯积分',[xy(toPoints(roll),'合成参考',colors[0]),xy(toPoints(fusedRoll),'Mahony',colors[2]),xy(toPoints(gyroRoll),'纯陀螺积分',colors[1])],'静态角度参考须由角度夹具独立提供。',true),attitude,seriesChart('俯仰角与相对偏航',[xy(toPoints(pitch),'参考俯仰',colors[0]),xy(toPoints(fusedPitch),'估计俯仰',colors[2]),xy(toPoints(fusedYaw),'相对偏航',colors[1])])],headers:['时间 s','参考横滚 °','角速度 °/s','加计 x g','加计 y g','加计 z g','估计横滚 °','估计俯仰 °','估计偏航 °'],rows:raw,explain:'以 100 Hz 对合成角速度作四元数积分和归一化，用重力方向反馈校正横滚与俯仰；非重力加速度较大时降低校正权重。真实样机仍须完成 I²C/SPI 采集、串口协议、角度夹具和端到端延迟验证。'};
 }
 
