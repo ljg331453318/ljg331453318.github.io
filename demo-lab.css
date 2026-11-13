@@ -40,3 +40,37 @@ a{color:#0066cc}
 @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 @media(max-width:850px){.lab{grid-template-columns:1fr;gap:24px}.controls{position:static}}
 @media(max-width:580px){.intro{padding:36px 0 25px}.intro p{font-size:15px}.controls{padding:19px}.chart{padding:14px}.playback{padding:11px}}
+
+/* UAV reference inspired light simulation workspace: white canvas, clear live panels. */
+:root{color-scheme:light}
+body{background:#fff!important;color:#17181a!important}
+.wrap{width:min(1440px,calc(100% - 48px))}
+.top{background:#fff!important}
+.intro{padding:44px 0 30px;border-color:#e5e5e5}
+.intro h1{font-size:clamp(34px,4.2vw,52px);letter-spacing:-.04em}
+.lab{grid-template-columns:minmax(0,1fr) 320px;gap:18px;align-items:start}
+.results{display:contents}
+.results-top{grid-column:1/-1;margin:0 0 -6px}
+.results-top h2{font-size:22px;color:#17181a}
+.results-top p{color:#777}
+.playback{grid-column:1/-1;grid-row:2;border:1px solid #e5e5e5;background:#fff;border-radius:12px;padding:12px 16px}
+.playback button{background:#1769aa;border-color:#1769aa;color:#fff;border-radius:999px}
+.playback button.secondary{background:#fff;color:#1769aa}
+.playback output,.playback .play-state{color:#6e6e73}
+.plot-grid{grid-column:1;grid-row:3;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.chart{background:#fff;border:1px solid #e5e5e5;border-radius:14px;padding:16px;box-shadow:0 2px 10px rgba(0,0,0,.025)}
+.chart.wide{grid-column:1/-1}
+.chart h3{color:#202124;font-size:16px}
+.chart canvas{background:#fff;border-radius:8px}
+.controls{grid-column:2;grid-row:3;position:sticky;top:18px;border:1px solid #e5e5e5;border-radius:14px;background:#fff;padding:19px}
+.controls h2{color:#202124}
+.controls label{color:#555}
+.controls select,.controls input[type=number]{background:#fff;color:#202124;border:1px solid #d2d2d7;border-radius:8px}
+.controls input[type=range]{accent-color:#1769aa}
+.buttons button{background:#1769aa;border-color:#1769aa;border-radius:999px}
+.control-help{border-color:#e5e5e5;color:#6e6e73}
+.control-help strong{color:#202124}
+.results .explain{grid-column:1/-1;grid-row:4;border-color:#e5e5e5;color:#6e6e73}
+.results .explain strong{color:#202124}
+.demo-references{border-color:#e5e5e5}
+@media(max-width:850px){.wrap{width:min(100% - 32px,720px)}.lab{grid-template-columns:1fr}.results{display:contents}.results-top,.playback,.plot-grid,.controls,.results .explain{grid-column:1;grid-row:auto}.controls{position:static}.plot-grid{grid-template-columns:1fr}.chart.wide{grid-column:1}}
