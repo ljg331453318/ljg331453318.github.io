@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#153b35"><meta name="description" content="走进云栖山，在立体道观中漫游、求签、炼制灵物，营造属于自己的洞天。"><title>云道 · 云栖山</title><link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="game.css"><link rel="stylesheet" href="study.css"></head>
+<body>
+<svg class="sprite" xmlns="http://www.w3.org/2000/svg"><defs>
+<symbol id="i-walk" viewBox="0 0 24 24"><circle cx="14" cy="4" r="2"/><path d="m7 21 4-8-3-3 4-3 4 4 4 1M12 8l-1 7 5 6M5 13l3-3"/></symbol>
+<symbol id="i-meditate" viewBox="0 0 24 24"><circle cx="12" cy="4" r="2"/><path d="m8 9-2 5-4 1m14-6 2 5 4 1M9 9h6l1 8-4 4-4-4 1-8M8 17l-5 3 9 1 9-1-5-3"/></symbol>
+<symbol id="i-incense" viewBox="0 0 24 24"><path d="M4 16h16l-2 6H6ZM9 16V8m6 8V8M10 5C7 3 12 2 10 0M16 5c-3-2 2-3 0-5"/></symbol>
+<symbol id="i-bell" viewBox="0 0 24 24"><path d="M4 17h16l-3-5V8a5 5 0 0 0-10 0v4ZM10 21h4M12 1v2"/></symbol>
+<symbol id="i-book" viewBox="0 0 24 24"><path d="M12 5v16M12 5C8 2 4 3 2 4v15c3-1 6-1 10 2 4-3 7-3 10-2V4c-3-1-6-2-10 1Z"/></symbol>
+<symbol id="i-leaf" viewBox="0 0 24 24"><path d="M5 19C-1 8 12 4 21 3c-1 10-4 20-14 14M3 22 16 9"/></symbol>
+<symbol id="i-music" viewBox="0 0 24 24"><path d="M9 17V5l12-2v12M9 8l12-2"/><ellipse cx="6" cy="18" rx="3" ry="3"/><ellipse cx="18" cy="16" rx="3" ry="3"/></symbol>
+<symbol id="i-volume" viewBox="0 0 24 24"><path d="M11 4 5 9H2v6h3l6 5ZM15 8a6 6 0 0 1 0 8M18 5a10 10 0 0 1 0 14"/></symbol>
+<symbol id="i-mute" viewBox="0 0 24 24"><path d="M11 4 5 9H2v6h3l6 5ZM16 9l6 6m0-6-6 6"/></symbol>
+<symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 1v3M12 20v3M1 12h3M20 12h3M4 4l2 2M18 18l2 2M4 20l2-2M18 6l2-2"/></symbol>
+<symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 15A9 9 0 0 1 9 3a9 9 0 1 0 11 12Z"/></symbol>
+<symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></symbol>
+<symbol id="i-map" viewBox="0 0 24 24"><path d="m2 5 7-3 6 3 7-3v17l-7 3-6-3-7 3ZM9 2v17m6-14v17"/></symbol>
+<symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9 9c0-4 7-4 6 0 0 2-3 2-3 5m0 3v.1"/></symbol>
+<symbol id="i-play" viewBox="0 0 24 24"><path d="m8 5 11 7-11 7Z"/></symbol>
+<symbol id="i-pause" viewBox="0 0 24 24"><path d="M8 5v14M16 5v14"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4L20 5"/></symbol>
+<symbol id="i-home" viewBox="0 0 24 24"><path d="m3 10 9-7 9 7M5 9v12h14V9M9 21v-7h6v7"/></symbol>
+<symbol id="i-fortune" viewBox="0 0 24 24"><path d="m5 9 2 13h10l2-13ZM8 9 6 2m6 7V1m4 8 3-7M9 14h6m-5 4h4"/></symbol>
+<symbol id="i-flame" viewBox="0 0 24 24"><path d="M12 2c3 5-1 6 3 9 1-2 2-3 2-4 8 10 3 16-5 16S1 17 6 9c0 4 2 5 3 5-2-7 3-8 3-12Z"/></symbol>
+<symbol id="i-bag" viewBox="0 0 24 24"><path d="m7 2 5 2 5-2-2 6c8 8 8 14-3 14S1 16 9 8ZM8 8h8M9 15h6m-3-3v6"/></symbol>
+<symbol id="i-gate" viewBox="0 0 24 24"><path d="M3 22V10a9 9 0 0 1 18 0v12M6 22V10a6 6 0 0 1 12 0v12M1 22h22M8 11h8m-8 4h8m-4-4v11"/></symbol>
+</defs></svg>
+<div id="world" aria-label="可交互的立体云栖道观"><canvas id="scene" tabindex="0" aria-label="云栖庭院。点击地面行走，拖动视角环顾，或用 WASD 移动；点击地标可前往各处。"></canvas></div>
+<div class="vignette" aria-hidden="true"></div>
+<header class="hud-top"><a class="brand" href="#" id="home"><span class="brand-seal" lang="zh">云<br>道</span><span>云道 · 云栖观<small>云栖山 · 线上道观</small></span></a><div class="world-time"><span class="time-orbit"></span><span id="time-label">清晨时分<small>晨雾轻笼 · 清晨</small></span></div><div class="utilities"><button class="utility" id="sound-toggle" aria-label="开启山间声景" title="山间声景"><svg><use href="#i-mute"/></svg></button><button class="utility" id="day-toggle" aria-label="切换至月夜" title="昼夜流转"><svg><use href="#i-sun"/></svg></button><button class="utility" id="help" aria-label="游历指南" title="游历指南"><svg><use href="#i-help"/></svg></button></div></header>
+<section class="welcome" id="welcome"><div class="overline"><span></span> 山中有奇遇，静候有缘人</div><h1>一签问心。<br>一径寻幽。<br><em>一方自在天地。</em></h1><p>解开月门，试炼灵物。<br>在云深处，安放自己的小天地。</p><button class="enter-button" id="enter">进入云栖山 <span class="enter-symbol">入</span></button><div class="welcome-foot">山间寻幽 · 炉前试炼 · 洞天小住</div></section>
+<button class="study-entry" data-action="study"><span aria-hidden="true">易</span><span>易学研习<small>八字 · 梅花课堂</small></span></button>
+<button class="adventure-card" id="adventure-card" inert aria-label="查看山行任务"></button>
+<button class="satchel-button" id="satchel-button" aria-label="打开行囊"><svg><use href="#i-bag"/></svg><span>行囊</span><strong id="satchel-count">0</strong></button>
+<div class="scene-labels" id="scene-labels" inert aria-label="山中各处"></div>
+<div class="location-card" id="location-card"><span class="overline">此刻所在</span><h2 id="location-name">云栖庭院</h2><p id="location-description">山中无所求，且自在停留。</p><span class="coordinates">云栖山 · 一方自在天地</span></div>
+<div class="movement-hint" id="movement-hint"><span><kbd>W</kbd><span class="key-row"><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></span></span><p>点击行走 · 拖动环顾<br><span>滚动缩放视角</span></p></div>
+<nav class="action-dock" aria-label="山中活动"><button data-action="fortune"><svg><use href="#i-fortune"/></svg><span>抽一支签</span></button><button data-action="alchemy"><svg><use href="#i-flame"/></svg><span>炼丹试炉</span></button><button data-action="adventure" class="active"><svg><use href="#i-map"/></svg><span>山间寻幽</span></button><button data-action="retreat"><svg><use href="#i-home"/></svg><span>我的洞天</span></button><span class="dock-divider"></span><button data-action="meditate"><svg><use href="#i-meditate"/></svg><span>静坐片刻</span></button></nav>
+<button class="journey-badge" id="journey" aria-label="查看修习之路"><span class="journey-icon">☯</span><span>初心境<small id="journey-points">静心值 0</small></span></button>
+<div class="audio-caption" id="audio-caption"><span class="sound-bars"><i></i><i></i><i></i></span><span id="audio-label">山静候，风亦听</span><button id="music-open">选择声景</button></div>
+<div class="practice-overlay" id="practice-overlay" hidden><div class="practice-orbit"></div><span class="overline">此刻，且安心安坐</span><h2 id="practice-time">5:00</h2><p id="practice-phrase">让呼吸，自有节律。</p><div><button id="practice-pause">暂停</button><button id="practice-end">结束静坐</button></div></div>
+<div id="loading" class="loading"><span class="loading-mark">云道</span><p>云栖山正在云雾中显现……</p><div><span></span></div></div>
+<dialog id="panel"><button class="close-panel utility" id="close-panel" aria-label="关闭窗口"><svg><use href="#i-close"/></svg></button><div id="panel-content"></div></dialog>
+<div class="toast" id="toast" role="status"></div>
+<div class="mobile-movement"><button id="move-up" aria-label="向前行走">W</button><div><button id="move-left" aria-label="向左行走">A</button><button id="move-down" aria-label="向后行走">S</button><button id="move-right" aria-label="向右行走">D</button></div></div>
+<script type="module" src="app.js"></script>
+</body></html>

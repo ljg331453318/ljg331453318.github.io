@@ -1,0 +1,21 @@
+{
+  "name": "跃渊 v1.8 研究版",
+  "author": "無鱼",
+  "license": "MIT",
+  "source": "https://github.com/qianye-wuyu/yueyuan-bazi",
+  "archive_sha256": "4f947d69da015300e478979299695117bbcfb7a895799c533ca24d80a4565852",
+  "files": [
+    "LICENSE",
+    "SKILL.md",
+    "references/analysis-checklist.md",
+    "references/biange.md",
+    "references/liuqin.md",
+    "references/patterns.md",
+    "references/quxiang-mode.md",
+    "references/renyuan-command.md",
+    "references/tiaohou-notes.md",
+    "references/wuxing-life.md",
+    "references/r-index.md"
+  ],
+  "adaptation": "仅导入选定研究资料及调候查表。未执行压缩包脚本，未导入用户反馈、个案或模型指令。网页历法使用同作者 6tail 的 lunar-javascript 1.7.8；并非运行原 Python 引擎。"
+}
