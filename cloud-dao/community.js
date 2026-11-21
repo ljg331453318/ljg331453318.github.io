@@ -164,7 +164,7 @@ export function createCommunity({world, panel, esc, toast}) {
     log.innerHTML = messages.length ? messages.map(m => `<p><strong>${esc(m.name)}</strong><span>${esc(m.text)}</span></p>`).join('') : '<p>庭中尚无留言，向道友打声招呼吧。</p>';
     if (nearBottom) log.scrollTop = log.scrollHeight;
     const list = root.querySelector('#community-peers');
-    list.textContent = peers.map(p => p.name + (p.session === session ? '（我）' : '')).join('、');
+    list.textContent = peers.map(p => p.name + (p.self ? '（我）' : '')).join('、');
   }
   async function heartbeat() {
     if (!joined && document.body.classList.contains('entered')) joined = true;
@@ -175,7 +175,7 @@ export function createCommunity({world, panel, esc, toast}) {
       const result = await call('presence', {...base(), ...position});
       peers = result.peers;
       messages = result.messages;
-      world.setPeers(peers.filter(p => p.session !== session));
+      world.setPeers(peers.filter(p => !p.self));
       entry.innerHTML = `道友同游<small>全站 · ${peers.length} 人在线</small>`;
       updateChat();
     } catch {

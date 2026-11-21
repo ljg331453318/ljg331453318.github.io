@@ -59,7 +59,10 @@ export async function handleDao(request, env) {
     const area = body.area === 'temple' ? 'temple' : 'retreat';
     await env.DB.prepare('INSERT INTO dao_presence VALUES (?,?,?,?,?,?,?,?) ON CONFLICT(session) DO UPDATE SET room=excluded.room,name=excluded.name,x=excluded.x,z=excluded.z,area=excluded.area,updated=excluded.updated WHERE profile=excluded.profile')
       .bind(body.session,id,room,name,Math.max(-15,Math.min(80,x)),Math.max(-12,Math.min(14,z)),area,now).run();
-    const peers = await env.DB.prepare('SELECT session,name,x,z,area FROM dao_presence WHERE room=? AND updated>? ORDER BY updated DESC LIMIT 60').bind(room,now-18000).all();
+    const peers = await env.DB.prepare(`SELECT session,name,x,z,area,(profile=?) AS self FROM (
+      SELECT *, ROW_NUMBER() OVER(PARTITION BY profile ORDER BY updated DESC,session DESC) AS row_index
+      FROM dao_presence WHERE room=? AND updated>?
+    ) WHERE row_index=1 ORDER BY updated DESC LIMIT 60`).bind(id,room,now-18000).all();
     const messages = await env.DB.prepare('SELECT id,name,text,created FROM dao_messages WHERE room=? AND created>? ORDER BY created DESC LIMIT 30').bind(room,now-86400000).all();
     // Bound transient room history without touching persistent progress.
     await env.DB.batch([
