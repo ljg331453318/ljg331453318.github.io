@@ -1,10 +1,10 @@
-import {prepareProgress,progressStorage,createCommunity} from './community.js?v=20261121-learning';
+import {prepareProgress,progressStorage,createCommunity} from './community.js?v=20261121-companions';
 await prepareProgress();
-import {initWorld,world} from './scene.js';
+import {initWorld,world} from './scene.js?v=20261121-companions';
 import {tracks,articles} from './content.js';
-import {createTempleGame} from './game.js?v=20261121-learning';
-import {createStudy} from './study.js?v=20261121-learning';
-import {createSubmissionPicker} from './submission.js?v=20261121-clean-ui';
+import {createTempleGame} from './game.js?v=20261121-companions';
+import {createStudy} from './study.js?v=20261121-companions';
+import {createSubmissionPicker} from './submission.js?v=20261121-companions';
 let game=null,study=null;
 const $=s=>document.querySelector(s),icon=n=>`<svg aria-hidden="true"><use href="#i-${n}"/></svg>`;
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -47,7 +47,7 @@ document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)r
  if(b.id==='visit-meditation')action('meditate');
  if(b.id==='help-map')openMap();
 });
-function openHall(){panel(`<div class="panel-overline">云栖观 · 云栖殿</div><h2>山门常开，随时可来。</h2><p>且将日常琐事暂放一旁。庭中漫步，拈香寄意，或安然落座，不必急着抵达哪里。</p><p>这里是一方取意于道家文化的虚构山境。修习之路记录你的参与与停留，不代表真实的修行品阶。</p><div class="panel-actions"><button class="panel-button" id="visit-meditation">${icon('meditate')}寻一处安坐</button><button class="panel-button outline" id="visit-library">${icon('book')}翻阅一篇文章</button></div><p class="panel-note">此刻游历的是属于你自己的山境。点击「道友同游」进入公共庭院，与在线道友交流。</p>`);}
+function openHall(){panel(`<div class="panel-overline">云栖观 · 云栖殿</div><h2>山门常开，随时可来。</h2><p>且将日常琐事暂放一旁。庭中漫步，拈香寄意，或安然落座，不必急着抵达哪里。</p><p>这里是一方取意于道家文化的虚构山境。修习之路记录你的参与与停留，不代表真实的修行品阶。</p><div class="panel-actions"><button class="panel-button" id="visit-meditation">${icon('meditate')}寻一处安坐</button><button class="panel-button outline" id="visit-library">${icon('book')}翻阅一篇文章</button></div><p class="panel-note">进入庭院后会自动与在线道友同游。点击「道友同游」可修改道号、查看在线道友并交流。</p>`);}
 function openMeditation(){if(session.active){closePanel();return;}panel(`<div class="panel-overline">静坐台 · 暂歇片刻</div><h2>且放下诸事，<br>安坐片刻。</h2><p>在台上寻一处坐下，以舒适的姿势自然呼吸，听听身边的风与声。</p><div class="duration-choices" aria-label="静坐时长">${[1,5,10,15].map(m=>`<button data-minutes="${m}" class="${session.total===m*60?'active':''}" aria-pressed="${session.total===m*60}">${m} 分钟</button>`).join('')}</div><button class="panel-button" id="start-practice">${icon('meditate')}开始静坐</button><p class="panel-note">无需追求特定状态。完成一次静坐后，每分钟可积累五点静心值。</p>`);}
 function startPractice(){session.active=true;session.running=true;session.remaining=session.total;session.end=Date.now()+session.total*1000;closePanel();world.meditate(true);$('#practice-overlay').hidden=false;$('#practice-pause').textContent='暂停';$('#practice-time').textContent=format(session.remaining);$('#practice-phrase').textContent='让呼吸，自有节律。';}
 function format(s){s=Math.max(0,Math.ceil(s));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');}

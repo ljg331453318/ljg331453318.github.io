@@ -155,7 +155,9 @@ export const progressStorage = {
 export function createCommunity({world, panel, esc, toast}) {
   const session = crypto.randomUUID();
   const root = document.querySelector('#panel-content');
-  let joined = false, inFlight = false, peers = [], messages = [], name = localRead('cloud-dao-nickname') || '云游道友';
+  let joined = false, inFlight = false, peers = [], messages = [], lastSuccess=0;
+  let name = localRead('cloud-dao-nickname') || '云游道友'+identity.id.slice(0,4).toUpperCase();
+  world.setSelfName(name);
   const entry = document.createElement('button');
   entry.className = 'community-entry';
   entry.innerHTML = '道友同游<small>点击进入公共庭院</small>';
@@ -168,7 +170,7 @@ export function createCommunity({world, panel, esc, toast}) {
     log.innerHTML = messages.length ? messages.map(m => `<p><strong>${esc(m.name)}</strong><span>${esc(m.text)}</span></p>`).join('') : '<p>庭中尚无留言，向道友打声招呼吧。</p>';
     if (nearBottom) log.scrollTop = log.scrollHeight;
     const list = root.querySelector('#community-peers');
-    list.textContent = peers.map(p => p.name + (p.self ? '（我）' : '')).join('、');
+    list.textContent = peers.length ? peers.map(p => p.name + (p.self ? '（我）' : '') + (p.area==='retreat'?' · 洞天中':' · 庭院中')).join('、') : '正在与公共庭院连接…';
   }
   async function heartbeat() {
     if (!joined && document.body.classList.contains('entered')) joined = true;
@@ -177,33 +179,38 @@ export function createCommunity({world, panel, esc, toast}) {
     try {
       const position = world.presence();
       const result = await call('presence', {...base(), ...position});
+      lastSuccess=Date.now();
       peers = result.peers;
       messages = result.messages;
       world.setPeers(peers.filter(p => !p.self));
-      entry.innerHTML = `道友同游<small>全站 · ${peers.length} 人在线</small>`;
+      entry.innerHTML = `道友同游<small>庭院 · ${peers.filter(peer=>peer.area==='temple').length} 人在线</small>`;
       updateChat();
     } catch {
-      world.setPeers([]);
+      if(Date.now()-lastSuccess>18000)world.setPeers([]);
       entry.innerHTML = '道友同游<small>连接中断 · 正在重连</small>';
     } finally { inFlight = false; }
   }
   function open() {
-    panel(`<div class="panel-overline">云栖山 · 公共庭院</div><h2>与道友，相逢山中。</h2><p id="cloud-status" class="panel-note">${esc(status)}</p><label for="companion-name">我的道号</label><input id="companion-name" maxlength="20" value="${esc(name)}"><button class="panel-button outline" id="save-companion-name">更新道号</button><p id="community-peers"></p><div id="community-messages" class="community-messages" aria-label="公共聊天记录"></div><form id="community-chat"><label for="community-text">向在线道友说句话</label><input id="community-text" maxlength="200" required placeholder="道友，今日可安好？"><button class="panel-button" type="submit">发送到公共庭院</button><p role="status" id="community-feedback"></p></form><details><summary>保存与恢复我的修习进度</summary><p>积分、行囊与课程进度自动保存。下载修习凭证后，可在其他浏览器恢复同一份进度。凭证请自己保管。</p><button class="panel-button outline" id="export-dao-pass">下载修习凭证</button><label for="import-dao-pass">选择已保存的修习凭证</label><input type="file" id="import-dao-pass" accept="application/json,.json"><p>本机心语和出生资料由当前浏览器保管。公共聊天对进入庭院的道友可见，保存最近一天的消息。</p></details>`);
+    panel(`<div class="panel-overline">云栖山 · 公共庭院</div><h2>与道友，相逢山中。</h2><p>庭院中的道友会以人物现身，头顶显示道号。回到庭院，就能看见彼此漫步。私人洞天中的道友返回庭院后才会出现。</p><button class="panel-button" id="return-public-courtyard">回庭院同游</button><p id="cloud-status" class="panel-note">${esc(status)}</p><label for="companion-name">我的道号</label><input id="companion-name" maxlength="20" value="${esc(name)}"><button class="panel-button outline" id="save-companion-name">更新道号</button><p id="community-peers"></p><div id="community-messages" class="community-messages" aria-label="公共聊天记录"></div><form id="community-chat"><label for="community-text">向在线道友说句话</label><input id="community-text" maxlength="200" required placeholder="道友，今日可安好？"><button class="panel-button" type="submit">发送到公共庭院</button><p role="status" id="community-feedback"></p></form><details><summary>保存与恢复我的修习进度</summary><p>积分、行囊与课程进度自动保存。下载修习凭证后，可在其他浏览器恢复同一份进度。凭证请自己保管。</p><button class="panel-button outline" id="export-dao-pass">下载修习凭证</button><label for="import-dao-pass">选择已保存的修习凭证</label><input type="file" id="import-dao-pass" accept="application/json,.json"><p>本机心语和出生资料由当前浏览器保管。公共聊天对进入庭院的道友可见，保存最近一天的消息。</p></details>`);
     updateChat();
   }
   listeners.add(message => {
     const element = root.querySelector('#cloud-status');
     if (element) element.textContent = message;
   });
-  entry.addEventListener('click', () => { joined = true; world.enter(); heartbeat(); open(); });
+  entry.addEventListener('click', () => { joined = true; world.go('wander'); heartbeat(); open(); });
   document.querySelector('#enter').addEventListener('click', () => { joined = true; heartbeat(); });
   document.addEventListener('click', () => {
     if (!joined && document.body.classList.contains('entered')) { joined = true; heartbeat(); }
   });
   root.addEventListener('click', async event => {
     const button = event.target.closest('button');
+    if(button?.id==='return-public-courtyard'){
+      document.querySelector('#panel').close();world.go('wander');joined=true;heartbeat();
+    }
     if (button?.id === 'save-companion-name') {
       name = root.querySelector('#companion-name').value.trim().slice(0,20) || '云游道友';
+      world.setSelfName(name);
       try { localStorage.setItem('cloud-dao-nickname', name); } catch {}
       await heartbeat(); toast('道号已更新');
     }
@@ -242,7 +249,7 @@ export function createCommunity({world, panel, esc, toast}) {
       applyProgress(remote.progress); localRevision = remote.revision; localDirty = false; await remember(); location.reload();
     } catch (error) { toast(error.message); }
   });
-  setInterval(heartbeat, 3000);
+  setInterval(heartbeat, 1000);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) heartbeat(); });
   window.addEventListener('pagehide', () => {
     if (!joined) return;

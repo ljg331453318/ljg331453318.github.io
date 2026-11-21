@@ -1,4 +1,4 @@
-import {submissionService} from './community.js?v=20261121-learning';
+import {submissionService} from './community.js?v=20261121-companions';
 
 export const BACKGROUND = {
   discipline:[['other','其他 / 暂不指定'],['engineering','工程与技术'],['science','自然科学'],['medicine','医学与生命科学'],['social','社会科学']],
