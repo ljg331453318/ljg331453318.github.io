@@ -155,9 +155,6 @@ dialog.submission-panel {
   font-size:14px;
   margin:12px 0 0;
 }
-.submission-range {
-  grid-column:1/-1;
-}
 .submission-actions {
   display:flex;
   flex-wrap:wrap;
@@ -485,18 +482,12 @@ dialog.submission-panel {
   .submission-form-grid {
     grid-template-columns:1fr;
   }
-  .submission-range {
-    grid-column:auto;
-  }
   .submission-fields {
     flex-wrap:wrap;
     gap:12px;
   }
   .submission-fields label {
     flex-basis:calc(50% - 12px);
-  }
-  .submission-range label:last-child {
-    flex-basis:100%;
   }
   .submission-panel fieldset {
     padding:17px 13px;
@@ -535,3 +526,12 @@ dialog.submission-panel {
     bottom:140px;
   }
 }
+
+.submission-inquiry {
+  border-left: 2px solid #cdb474;
+  padding: 18px 22px;
+  background: #204739;
+  border-radius: 5px;
+}
+.submission-inquiry strong { color: #ead09a; font-size: 18px; font-weight: 400; }
+.submission-inquiry p { font-size: 15px; line-height: 1.9; }

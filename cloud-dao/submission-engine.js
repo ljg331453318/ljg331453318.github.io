@@ -38,16 +38,21 @@ function compareCandidates(a, b) {
   return a.date.localeCompare(b.date);
 }
 
-export function selectSubmissionDates(input) {
+export function selectSubmissionDates(birth, inquiry = beijingNow()) {
+  const input = {
+    birthDate: birth.birthDate,
+    birthTime: birth.birthTime,
+    askDate: inquiry.date,
+    askTime: inquiry.time
+  };
   const birthTime = civilStamp(input.birthDate,input.birthTime);
   const askedTime = civilStamp(input.askDate,input.askTime);
-  const start = civilStamp(input.startDate,input.submitTime);
-  const end = civilStamp(input.endDate,input.submitTime);
   if (birthTime > askedTime) throw new Error('出生时刻应早于问询时刻。');
-  if (start < askedTime) throw new Error('候选投稿时刻应从问询之后开始，请调整起始日期或预计投稿时间。');
-  if (end < start) throw new Error('结束日期应不早于起始日期。');
-  const days = Math.round((end-start)/DAY_MS) + 1;
-  if (days > 60) throw new Error('每次请选择最多 60 天，便于逐日比较。');
+  const start = civilStamp(input.askDate,'00:00');
+  const supportedEnd = civilStamp('2099-12-31','00:00');
+  const days = Math.min(60,Math.floor((supportedEnd-start)/DAY_MS)+1);
+  input.startDate = input.askDate;
+  input.endDate = shiftDate(input.askDate,days-1);
 
   const natal = birthChart({date:input.birthDate,time:input.birthTime});
   const plum = plumCalendar(input.askDate,input.askTime);
@@ -55,7 +60,7 @@ export function selectSubmissionDates(input) {
   const candidates = [];
   for (let offset = 0; offset < days; offset++) {
     const date = shiftDate(input.startDate,offset);
-    const civil = parseCivil(date,input.submitTime);
+    const civil = parseCivil(date,'12:00');
     const lunar = Solar.fromYmdHms(civil.y,civil.m,civil.day,civil.h,civil.min,0).getLunar();
     const day = lunar.getDayInGanZhiExact2();
     const clashes = [], combinations = [];
@@ -66,7 +71,7 @@ export function selectSubmissionDates(input) {
     });
     const god = tenGod(natal.day,day[0]);
     candidates.push({
-      date, time:input.submitTime, day, weekday:new Intl.DateTimeFormat('zh-CN',{weekday:'long',timeZone:'UTC'}).format(new Date(start + offset*DAY_MS)),
+      date, day, weekday:new Intl.DateTimeFormat('zh-CN',{weekday:'long',timeZone:'UTC'}).format(new Date(start + offset*DAY_MS)),
       lunar:lunar.toString(), heavenlySpirit:lunar.getDayTianShen(), yellow:lunar.getDayTianShenType() === '黄道',
       clashes, combinations, god, writing:WRITING_GODS.has(god),
       element:stemElement(day[0]), plumRelation:elementRelation(plum.body.element,stemElement(day[0]))
