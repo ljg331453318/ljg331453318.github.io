@@ -155,7 +155,7 @@ export const progressStorage = {
 export function createCommunity({world, panel, esc, toast}) {
   const session = crypto.randomUUID();
   const root = document.querySelector('#panel-content');
-  let joined = false, inFlight = false, peers = [], messages = [], lastSuccess=0;
+  let joined = false, inFlight = false, peers = [], messages = [], lastSuccess=0,lastAttempt=0;
   let name = localRead('cloud-dao-nickname') || '云游道友'+identity.id.slice(0,4).toUpperCase();
   world.setSelfName(name);
   const entry = document.createElement('button');
@@ -170,11 +170,17 @@ export function createCommunity({world, panel, esc, toast}) {
     log.innerHTML = messages.length ? messages.map(m => `<p><strong>${esc(m.name)}</strong><span>${esc(m.text)}</span></p>`).join('') : '<p>庭中尚无留言，向道友打声招呼吧。</p>';
     if (nearBottom) log.scrollTop = log.scrollHeight;
     const list = root.querySelector('#community-peers');
-    list.textContent = peers.length ? peers.map(p => p.name + (p.self ? '（我）' : '') + (p.area==='retreat'?' · 洞天中':' · 庭院中')).join('、') : '正在与公共庭院连接…';
+    const signature=JSON.stringify(peers.map(p=>[p.session,p.name,p.area]));
+    if(list.dataset.signature!==signature){
+      list.dataset.signature=signature;
+      list.innerHTML=peers.length?peers.map(p=>p.session===session?`<span>${esc(p.name)}（我）</span>`:
+        `<button class="peer-meet" type="button" data-peer-meet="${esc(p.session)}" ${p.area!=='temple'?'disabled':''}>${esc(p.name)}${Number(p.sameProfile)===1?' · 另一窗口':''}<small>${p.area==='temple'?'前往相见':'私人洞天中'}</small></button>`).join(''):'正在与公共庭院连接…';
+    }
   }
   async function heartbeat() {
     if (!joined && document.body.classList.contains('entered')) joined = true;
-    if (!joined || inFlight || document.hidden) return;
+    if (!joined || inFlight || (document.hidden&&Date.now()-lastAttempt<5000)) return;
+    lastAttempt=Date.now();
     inFlight = true;
     try {
       const position = world.presence();
@@ -182,11 +188,11 @@ export function createCommunity({world, panel, esc, toast}) {
       lastSuccess=Date.now();
       peers = result.peers;
       messages = result.messages;
-      world.setPeers(peers.filter(p => !p.self));
-      entry.innerHTML = `道友同游<small>庭院 · ${peers.filter(peer=>peer.area==='temple').length} 人在线</small>`;
+      world.setPeers(peers.filter(p=>p.session!==session).map(p=>({...p,name:p.name+(Number(p.sameProfile)===1?' · 另一窗口':'')})));
+      entry.innerHTML = `道友同游<small>庭院 · ${result.courtyardCount??peers.filter(peer=>peer.area==='temple').length} 人在线 · 点击相见</small>`;
       updateChat();
     } catch {
-      if(Date.now()-lastSuccess>18000)world.setPeers([]);
+      if(Date.now()-lastSuccess>30000)world.setPeers([]);
       entry.innerHTML = '道友同游<small>连接中断 · 正在重连</small>';
     } finally { inFlight = false; }
   }
@@ -205,6 +211,11 @@ export function createCommunity({world, panel, esc, toast}) {
   });
   root.addEventListener('click', async event => {
     const button = event.target.closest('button');
+    if(button?.dataset.peerMeet){
+      const peer=peers.find(p=>p.session===button.dataset.peerMeet);
+      if(!peer||peer.area!=='temple'){toast('这位道友已离开庭院。');return;}
+      document.querySelector('#panel').close();world.meetPeer(peer);toast('已望向'+peer.name+'，正在走近相见。');
+    }
     if(button?.id==='return-public-courtyard'){
       document.querySelector('#panel').close();world.go('wander');joined=true;heartbeat();
     }

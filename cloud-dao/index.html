@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#153b35"><meta name="description" content="走进云栖山，在立体道观中漫游、求签、炼制灵物，营造属于自己的洞天。"><title>云道 · 云栖山</title><link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="game.css"><link rel="stylesheet" href="study.css"><link rel="stylesheet" href="community.css?v=20261121-companions"><link rel="stylesheet" href="submission.css?v=20261121-clean-ui"></head>
+<html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#153b35"><meta name="description" content="走进云栖山，在立体道观中漫游、求签、炼制灵物，营造属于自己的洞天。"><title>云道 · 云栖山</title><link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="game.css"><link rel="stylesheet" href="study.css"><link rel="stylesheet" href="life.css?v=20261121-pathways-r3"><link rel="stylesheet" href="birth-date.css?v=20261121-birth"><link rel="stylesheet" href="community.css?v=20261121-pathways-r4"><link rel="stylesheet" href="submission.css?v=20261121-clean-ui"></head>
 <body>
 <svg class="sprite" xmlns="http://www.w3.org/2000/svg"><defs>
 <symbol id="i-walk" viewBox="0 0 24 24"><circle cx="14" cy="4" r="2"/><path d="m7 21 4-8-3-3 4-3 4 4 4 1M12 8l-1 7 5 6M5 13l3-3"/></symbol>
@@ -30,7 +30,7 @@
 <header class="hud-top"><a class="brand" href="#" id="home"><span class="brand-seal" lang="zh">云<br>道</span><span>云道 · 云栖观<small>云栖山 · 线上道观</small></span></a><div class="world-time"><span class="time-orbit"></span><span id="time-label">清晨时分<small>晨雾轻笼 · 清晨</small></span></div><div class="utilities"><button class="utility" id="sound-toggle" aria-label="开启山间声景" title="山间声景"><svg><use href="#i-mute"/></svg></button><button class="utility" id="day-toggle" aria-label="切换至月夜" title="昼夜流转"><svg><use href="#i-sun"/></svg></button><button class="utility" id="help" aria-label="游历指南" title="游历指南"><svg><use href="#i-help"/></svg></button></div></header>
 <section class="welcome" id="welcome"><div class="overline"><span></span> 山中有奇遇，静候有缘人</div><h1>一签问心。<br>一径寻幽。<br><em>一方自在天地。</em></h1><p>解开月门，试炼灵物。<br>在云深处，安放自己的小天地。</p><button class="enter-button" id="enter">进入云栖山 <span class="enter-symbol">入</span></button><div class="welcome-foot">山间寻幽 · 炉前试炼 · 洞天小住</div></section>
 <button id="submission-entry" class="submission-entry" disabled aria-busy="true" aria-label="SCI论文投稿黄道吉日"><span>SCI 论文投稿</span><strong>投稿吉日 · 吉时</strong><small>八字问卦 · 时辰推算 · 投稿跟进</small></button>
-<button class="study-entry" data-action="study"><span aria-hidden="true">易</span><span>易学研习<small>八字 · 梅花课堂</small></span></button>
+<button class="study-entry" data-action="study"><span aria-hidden="true">易</span><span>易学研习<small>八字 · 人生轨迹</small></span></button>
 <button class="adventure-card" id="adventure-card" inert aria-label="查看山行任务"></button>
 <button class="satchel-button" id="satchel-button" aria-label="打开行囊"><svg><use href="#i-bag"/></svg><span>行囊</span><strong id="satchel-count">0</strong></button>
 <div class="scene-labels" id="scene-labels" inert aria-label="山中各处"></div>
@@ -44,5 +44,5 @@
 <dialog id="panel"><button class="close-panel utility" id="close-panel" aria-label="关闭窗口"><svg><use href="#i-close"/></svg></button><div id="panel-content"></div></dialog>
 <div class="toast" id="toast" role="status"></div>
 <div class="mobile-movement"><button id="move-up" aria-label="向前行走">W</button><div><button id="move-left" aria-label="向左行走">A</button><button id="move-down" aria-label="向后行走">S</button><button id="move-right" aria-label="向右行走">D</button></div></div>
-<script type="module" src="app.js?v=20261121-companions"></script>
+<script type="module" src="app.js?v=20261121-pathways-r4"></script>
 </body></html>

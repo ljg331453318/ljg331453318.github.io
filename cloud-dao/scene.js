@@ -1,5 +1,5 @@
 import * as THREE from './vendor/three.module.min.js';
-import {createPeerMotion,receivePeerMotion,samplePeerMotion,separateOverlappingPeer,placeNameplate} from './companion-motion.js?v=20261121-companions';
+import {createPeerMotion,receivePeerMotion,samplePeerMotion,separateOverlappingPeer,placeNameplate} from './companion-motion.js?v=20261121-pathways-r4';
 
 const TAU=Math.PI*2;
 let scene,camera,renderer,clock,avatar,avatarBody,bell,light,hemisphere,sky,water,smoke,petals,focusRing;
@@ -239,6 +239,14 @@ export const world={
   return {x: avatar?.position.x ?? 0, z: avatar?.position.z ?? 7, area};
  },
  setSelfName(name){if(avatar)setPersonName(avatar,name,true);},
+ meetPeer(peer){
+  if(!peer||peer.area!=='temple')return;
+  this.go('wander');
+  let x=THREE.MathUtils.clamp(peer.x+1.2,-13,13),z=THREE.MathUtils.clamp(peer.z,-10,12);
+  const dx=(x-9.5)/4.3,dz=(z-4)/3.3,r=Math.hypot(dx,dz);
+  if(r<1&&r>.01){x=9.5+dx/r*4.4;z=4+dz/r*3.4;}
+  destination.set(x,.18,z);desiredTarget.set(peer.x,1.2,peer.z-1);desiredDistance=innerWidth<700?30:23;
+ },
  setPeers(peers) {
   if(!scene)return;
   const current=new Set(peers.map(peer=>peer.session));

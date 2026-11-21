@@ -1,4 +1,4 @@
-import {progressStorage} from './community.js?v=20261121-companions';
+import {progressStorage} from './community.js?v=20261121-pathways-r4';
 import {ingredients,recipes,fortunes,questSteps,createGameState,flag,gather,findRecipe,beginBrew,isHeatHit,finishBrew,turnSeal,sealsSolved,sealHint,plotUnlocked,plant,water,harvest,craftDecor,expandRetreat,currentQuest} from './game-engine.js';
 
 export function createTempleGame(host){

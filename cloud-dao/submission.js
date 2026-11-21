@@ -1,6 +1,7 @@
+import {renderBirthDate} from './birth-date.js?v=20261121-birth';
 import {selectSubmissionDates,eligibleSlot,chooseDistinctDates} from './submission-engine.js?v=20261121-learning';
 import {featureVector,predict} from './submission-learning.js?v=20261121-learning';
-import {createSubmissionRecords,backgroundFields} from './submission-records.js?v=20261121-companions';
+import {createSubmissionRecords,backgroundFields} from './submission-records.js?v=20261121-pathways-r4';
 
 const PRINCIPLE = '以作者的出生年月日时排盘为个人参照，取点击测算当刻的北京时间起梅花易数卦，从问询当日起向后推算，结合八字与黄历给出 SCI 论文投稿的候选日期与时辰。';
 const GUIDANCE = '择时仅作传统文化体验与投稿安排参考，论文录用仍取决于稿件质量、期刊要求和评审。';
@@ -24,6 +25,7 @@ export function createSubmissionPicker({panel, esc, beforeOpen}) {
   }
 
   function field(label, name, type, limits = '') {
+    if(type==='date')return `<label>${label}${renderBirthDate({name,value:fields[name],id:'submission-'+name})}</label>`;
     return `<label for="submission-${name}">${label}<input id="submission-${name}" name="${name}" type="${type}" value="${esc(fields[name])}" ${limits} required>
 </label>`;
   }

@@ -8,3 +8,9 @@
 .companion-name-self{background:#d8c891ed;color:#173d31;border-color:#f3e4ba;text-shadow:none}
 .companion-name[hidden]{display:none}
 @media(max-width:700px){.companion-name{max-width:142px;font-size:12px;line-height:17px;padding:4px 8px}}
+
+#community-peers{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:18px 0}
+.peer-meet{display:flex;flex-direction:column;gap:5px;min-height:54px;padding:9px 13px;border:1px solid #c5b17a88;background:#244d3f;border-radius:7px;text-align:left;color:#f0e0b2;font-size:15px}
+.peer-meet small{font-size:12px;color:#c5d8bd}.peer-meet:hover{background:#365e48}.peer-meet:disabled{opacity:.6;cursor:default}
+
+@media(max-width:700px){body:not(.entered) .study-entry,body:not(.entered) .community-entry{visibility:visible}}
