@@ -3,7 +3,7 @@ await prepareProgress();
 import {initWorld,world} from './scene.js?v=20261121-pathways-r4';
 import {tracks,articles} from './content.js';
 import {createTempleGame} from './game.js?v=20261121-pathways-r4';
-import {createStudy} from './study.js?v=20261121-pathways-r4';
+import {createStudy} from './study.js?v=20261121-birth-first';
 import {createSubmissionPicker} from './submission.js?v=20261121-pathways-r4';
 let game=null,study=null;
 const $=s=>document.querySelector(s),icon=n=>`<svg aria-hidden="true"><use href="#i-${n}"/></svg>`;
@@ -86,6 +86,7 @@ try{initWorld({action,location,move:()=>{if(session.active)cancelPractice(false)
 if(!document.querySelector('.loading.error')){game=createTempleGame({world,panel,closePanel,toast,icon,esc,action,reward:n=>{data.xp+=n;save();}});game.sync();}
 
 study=createStudy({world,panel,esc,toast});
+$('#life-entry').disabled=false;$('#life-entry').removeAttribute('aria-busy');
 
 createCommunity({world,panel,esc,toast});
 

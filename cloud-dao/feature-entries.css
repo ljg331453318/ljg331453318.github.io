@@ -1,0 +1,36 @@
+/* Two equally prominent home entries; reserve space below the small tools. */
+.submission-entry{top:250px}
+.life-entry{top:434px;background:linear-gradient(130deg,#b6cfb6,#8eaf94);border-color:#d0e2c6}
+.life-entry:hover{background:#c4d9bc}
+.study-entry{top:160px;right:200px;width:144px;min-height:74px;padding:10px 12px;gap:8px}
+.study-entry>span:last-child{font-size:13px}.study-entry small{font-size:10px}
+.community-entry{top:160px;right:34px;width:154px;min-height:74px;padding:10px 12px;font-size:14px}
+.community-entry small{font-size:11px;line-height:1.6}
+.study-shell:has(.life-birth-gate)>.study-heading{display:none}
+.life-birth-gate{padding:18px 0 8px}
+.study-panel .life-birth-gate h3{font-size:34px;line-height:1.5;margin:18px 0}
+.study-panel .life-birth-gate>p{max-width:760px;font-size:15px}
+.life-flow{display:flex;flex-wrap:wrap;gap:12px;margin:25px 0;color:#becfb6;font-size:13px}
+.life-flow span{padding:9px 13px;border:1px solid #a7b48b66;border-radius:5px}.life-flow .active{background:#d6c18c;color:#183d31;border-color:#ddcc9c}
+.life-birth-gate .life-birth-form{padding:24px;background:#12352c;border:1px solid #94a67e66;border-radius:8px}
+.life-birth-gate .life-birth-date{flex:1.8;min-width:235px}
+.life-birth-summary{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px;padding:18px 20px;margin:0 0 24px;border:1px solid #a0af8266;border-radius:7px;background:#224738;scroll-margin-top:65px}
+.life-birth-summary>div{display:flex;flex-direction:column;gap:7px;min-width:0;flex:1}
+.life-birth-summary span{font-size:12px;color:#c3d2b7}.life-birth-summary strong{font-family:var(--serif);font-size:22px;font-weight:400;color:#edd59b}.life-birth-summary small{font-size:12px;color:#bed0b4;line-height:1.8}
+.life-birth-summary>.life-detail{flex-basis:100%;margin:0;padding:10px 0 0}
+@media(min-width:701px) and (max-height:680px){.study-entry,.community-entry{top:126px;min-height:62px}.submission-entry{top:204px;min-height:132px;padding:16px 20px;gap:5px}.life-entry{top:348px}.submission-entry>strong{font-size:24px}.submission-entry>small{font-size:12px}}
+@media(min-width:701px) and (max-width:800px){.study-entry{right:172px;width:130px}.community-entry{right:24px;width:136px}.submission-entry{right:24px;width:278px}}
+@media(max-width:700px){
+ .submission-entry{top:154px;left:18px;right:18px;width:auto;min-height:116px;padding:14px 18px;gap:4px}
+ .life-entry{top:282px}.submission-entry>strong{font-size:24px}.submission-entry>small{font-size:12px}
+ .study-entry{top:410px;left:18px;right:auto;width:calc(50% - 23px);min-height:62px;height:62px;padding:8px 10px}
+ .community-entry{top:410px;right:18px;width:calc(50% - 23px);min-height:62px;height:62px;padding:8px 10px;font-size:13px}
+ .life-birth-gate .life-birth-form{padding:18px 14px}.life-birth-gate .life-birth-date{min-width:0}
+ .study-panel .life-birth-gate h3{font-size:28px}.life-flow{gap:7px;font-size:11px}.life-flow span{padding:8px 9px}
+ .life-birth-summary{padding:16px}.life-birth-summary>div{flex-basis:100%}.life-birth-summary strong{font-size:21px}
+}
+@media(max-width:700px) and (max-height:740px){.submission-entry{top:124px;min-height:94px;padding:11px 16px}.life-entry{top:230px}.submission-entry>span{font-size:11px}.submission-entry>strong{font-size:22px}.submission-entry>small{font-size:11px}.study-entry,.community-entry{top:336px;min-height:58px;height:58px}}
+@media(max-width:700px) and (max-height:620px){body:not(.entered) .welcome{bottom:100px}}
+@media(max-width:700px) and (max-height:560px){.submission-entry{top:80px;min-height:84px;padding:8px 14px;gap:2px}.life-entry{top:176px}.study-entry,.community-entry{top:272px;min-height:50px;height:50px}.submission-entry>strong{font-size:21px}.submission-entry>small{font-size:10px}}
+@media(max-width:700px){body:not(.entered) .welcome .overline{display:none}body:not(.entered) .welcome h1{margin-top:0}}
+@media(max-width:700px) and (max-height:820px){body:not(.entered) .welcome h1{display:none}}

@@ -1,7 +1,7 @@
 import {renderBirthDate} from './birth-date.js?v=20261121-birth';
 import {DEFAULT_LIFE,GOALS,LIFE_VERSION,normalizeLife,simulateLife,lifeActions,observationQuadrant,sanitizeLifeRecord} from './life-engine.js?v=20261121-pathways-r4';
-import {birthChart,GAN,ZHI} from './yi-engine.js';
-import {beijingNow} from './submission-engine.js?v=20261121-learning';
+import {birthChart,parseCivil,GAN,ZHI} from './yi-engine.js';
+import {beijingNow,civilStamp} from './submission-engine.js?v=20261121-learning';
 
 const STORE='cloud-dao-life-plans-v1';
 const colors=['#c9998d','#a8d4b4','#ecd08b'];
@@ -18,19 +18,37 @@ export function createLifePlanner({root,esc,toast,show,onChart}){
   if(!active||JSON.stringify(active.profile)!==JSON.stringify(profile))return [];
   const monthly=new Map();active.observations.forEach(row=>monthly.set(row.month,row));return [...monthly.values()].sort((a,b)=>a.month-b.month);
  }
- function compute(){result=simulateLife(profile,effectiveRows());baseline=simulateLife({...profile,policy:'maintain'},effectiveRows());month=Math.min(month,profile.horizon);}
+ function hasCompleteBirth(){
+  if(!chart||chart.manual||chart.unknown||!chart.date||!chart.time||chart.columns?.length!==4||!chart.columns.every(Boolean))return false;
+  try{parseCivil(chart.date,chart.time);const now=beijingNow();return civilStamp(chart.date,chart.time)<=civilStamp(now.date,now.time);}catch{return false;}
+ }
+ function compute(){if(!hasCompleteBirth()){result=baseline=null;return;}result=simulateLife(profile,effectiveRows());baseline=simulateLife({...profile,policy:'maintain'},effectiveRows());month=Math.min(month,profile.horizon);}
  function birthContent(){
-  if(!chart)return '<p class="life-muted">可填写出生信息，加入四柱与岁运参照。也可以先用现实条件推演。</p>';
+  if(!chart)return '<p class="life-muted">请先填写完整出生年月日时，完成排盘后再查看人生轨迹。</p>';
   const nowYear=Number(beijingNow().date.slice(0,4)),end=nowYear+Math.ceil(profile.horizon/12);
   return `<div class="life-pillars">${chart.columns.map((column,i)=>`<div><small>${['年柱','月柱','日柱','时柱'][i]}</small><strong>${column?.pillar||'未知'}</strong><span>${column?.god||'待补时辰'}</span></div>`).join('')}</div>
    <p class="life-muted">日主${chart.day}${chart.element} · 月令本气${chart.monthBase.gan}，${chart.pattern}为研习入口。排盘用于传统参照，数值轨迹由现实条件和行动设定生成。</p>
    <div class="life-year-axis">${Array.from({length:end-nowYear+1},(_,i)=>{const y=nowYear+i,luck=chart.luck?.cycles.find(c=>y>=c.start&&y<=c.end);return `<div><strong>${y}</strong><span>${GAN[(y-4)%10]}${ZHI[(y-4)%12]}流年</span><small>${luck?luck.pillar+'大运':'未排大运'}</small></div>`;}).join('')}</div>`;
  }
+ function birthForm(){
+  return `<form id="life-birth-form" class="life-birth-form"><label class="life-birth-date">公历出生日期${renderBirthDate({name:'date',value:birth.date,id:'life-birth'})}</label><label>出生时间 · 北京时间<input name="time" type="time" value="${esc(birth.time)}" required></label><label>传统排运性别（可不填）<select name="gender"><option value="">可不填</option><option value="1" ${birth.gender==='1'?'selected':''}>男</option><option value="0" ${birth.gender==='0'?'selected':''}>女</option></select></label><button type="submit" class="panel-button">排盘并生成人生轨迹</button></form>`;
+ }
+ function openBirthGate(){
+  clearInterval(timer);clearTimeout(queued);playing=false;result=baseline=null;
+  show(`<section class="life-birth-gate"><span class="study-eyebrow">人生轨迹 · 从你的出生时刻开始</span><h3>先排你的四柱，<br>再看人生轨迹。</h3><p>填写出生年月日时，完成排盘后，再查看岁运参照、轨迹区间与行动比较。</p><div class="life-flow" aria-label="查看人生轨迹的步骤"><span class="active">① 出生信息</span><span>② 四柱排盘</span><span>③ 轨迹与行动</span></div>${birthForm()}<p class="life-small">年份直接输入，无需翻日历。出生时间为必填项；不确定时请先核实，不会自动猜测时柱。</p><p class="life-small">出生信息仅在当前页面计算，不上传公共庭院，也不随计划备份保存。${records.length?'已保存的行动计划会保留；本次仍需先填写出生信息。':''}</p><p id="life-status" class="life-feedback" role="status"></p></section>`);
+ }
  function open(existingChart){
-  clearInterval(timer);playing=false;
-  if(existingChart){chart=existingChart;if(!existingChart.manual)birth={date:existingChart.date,time:existingChart.unknown?'':existingChart.time,gender:birth.gender,unknown:existingChart.unknown};}
+  clearInterval(timer);clearTimeout(queued);playing=false;
+  if(arguments.length){
+   chart=existingChart||null;
+   if(!chart)birth={date:'',time:'',gender:'',unknown:false};
+   else if(chart.manual)birth={date:'',time:'',gender:'',unknown:false};
+   else birth={date:chart.date,time:chart.unknown?'':chart.time,gender:birth.gender,unknown:false};
+  }
+  if(!hasCompleteBirth()){openBirthGate();return;}
   compute();
   show(`<section class="life-hero"><div><span class="study-eyebrow">人生轨迹 · 可行性推演</span><h3>未来有分叉，<br>选择可以被看见。</h3><p>把目标、现状与行动放进同一张图。拖一拖，看看不同走法怎样展开。</p></div><div class="life-hero-art" aria-hidden="true"><i></i><i></i><i></i><span>此刻</span></div></section>
+   <section class="life-birth-summary"><div><span>本次出生排盘 · ${esc(chart.date)} ${esc(chart.time)} · 北京时间</span><strong>${chart.pillars.join('　')}</strong><small>排盘与岁运作为传统参照；下方数值情景由现实条件和行动设定生成。</small></div><button type="button" class="panel-button outline" data-life-edit-birth>修改出生信息</button><details class="life-detail"><summary>查看四柱与岁运参照</summary><div id="life-birth-result">${birthContent()}</div><p class="life-small">岁运年表为概览，交运边界须以排盘的准确交运时刻为准。</p></details></section>
    <div class="life-layout"><details class="life-control-card" ${innerWidth>=700?'open':''}><summary>调整现状与行动<small>拖动滑块，观察轨迹变化</small></summary><form id="life-controls"><label class="life-field">我想看哪个方向<select name="goal">${Object.entries(GOALS).map(([id,g])=>`<option value="${id}" ${profile.goal===id?'selected':''}>${g.name}</option>`).join('')}</select></label>
    <label class="life-field">把目标写具体一点<input name="title" maxlength="60" value="${esc(profile.title)}" placeholder="例如：完成论文初稿，或做出一份作品"></label>
    <div class="life-control-title">现在站在哪里</div>${range('起点目标推进程度','progress')}${range('目前每周投入','currentHours',0,40,1,' 小时')}${range('可支配时间上限','budget',1,40,1,' 小时')}${range('现实支持与资源','support')}${range('当前任务负荷','load')}
@@ -39,9 +57,9 @@ export function createLifePlanner({root,esc,toast,show,onChart}){
    <section class="life-stage"><div class="life-stage-heading"><div><span class="study-eyebrow">目标推进指数 · 0—100 自评尺度</span><h3 id="life-goal-title">${esc(profile.title)}</h3></div><span class="life-live-dot">随条件变化</span></div>
    <div class="life-policy" aria-label="比较行动方式">${[['maintain','延续现状'],['focus','聚焦行动'],['sprint','加速冲刺']].map(([id,t])=>`<button type="button" data-life-policy="${id}" aria-pressed="${profile.policy===id}" class="${profile.policy===id?'active':''}">${t}</button>`).join('')}</div>
    <div id="life-plot" class="life-plot"></div><div class="life-time-control"><button type="button" class="life-play" data-life-play aria-label="播放轨迹变化">▶</button><label for="life-month">走到第 <output id="life-month-value">${month}</output> 个月<input id="life-month" type="range" min="0" max="${profile.horizon}" step="1" value="${month}"></label></div>
-   <div id="life-readout"></div><p class="life-caption">阴影为当前假设下模拟路径的 10%—90% 分位带。分支占比是模拟样本比例，不是现实人生事件的概率。</p>
+   <p class="life-small" id="life-calendar-context"></p><div id="life-readout"></div><p class="life-caption">阴影为当前假设下模拟路径的 10%—90% 分位带。分支占比是模拟样本比例，不是现实人生事件的概率。</p>
    <div id="life-branches" class="life-branches"></div><section class="life-next"><span class="study-eyebrow">把可能性，落到下一步</span><h3>从这周开始，怎么走？</h3><div id="life-actions"></div></section></section></div>
-   <details class="life-detail"><summary>加入八字与岁运参照</summary><form id="life-birth-form" class="life-birth-form"><label>公历出生日期${renderBirthDate({name:'date',value:birth.date,id:'life-birth'})}</label><label>出生时间 · 北京时间<input name="time" type="time" value="${esc(birth.time)}" ${birth.unknown?'disabled':'required'}></label><label>传统排运性别<select name="gender"><option value="">可不填</option><option value="1" ${birth.gender==='1'?'selected':''}>男</option><option value="0" ${birth.gender==='0'?'selected':''}>女</option></select></label><label class="life-checkbox"><input type="checkbox" name="unknown" ${birth.unknown?'checked':''}>时辰未知</label><button type="submit" class="panel-button outline">更新排盘参照</button></form><p class="life-small">出生信息只在当前页面计算；不随人生计划存档，不上传公共庭院。</p><div id="life-birth-result">${birthContent()}</div><p class="life-small">岁运年表为概览，交运边界须以排盘的准确交运时刻为准。</p></details>
+
    <section class="life-journal"><div><span class="study-eyebrow">现实反馈 · 逐月回看</span><h3>留住最初的推演，再看实际走到了哪里。</h3><p>保存计划后，补记真实投入和进展。原始曲线保留，后续曲线随记录更新。</p></div><div class="life-journal-actions"><button type="button" class="panel-button" data-life-save>保存本次计划到本机</button><button type="button" class="panel-button outline" data-life-export>下载计划备份</button><label class="life-import">导入备份<input type="file" id="life-import" accept="application/json,.json"></label></div><div id="life-record-content"></div></section>
    <details class="life-detail"><summary>研究思路与图表怎么读</summary><p>本栏借鉴压缩动力学研究中的多步轨迹、重尾扰动、候选路径与新观察修正，以及“投入变化 × 进展变化”的四象限反馈。它是面向个人规划的条件情景演示，没有把股票模型的参数或回测成绩当成人生预测证据。</p><p>现实输入为目标进度、时间预算、持续性、反馈、资源和负荷。行动影响假设下的推进速度，环境波动影响路径分散程度。保持随机样本一致，改变滑块时比较的是条件变化，而非重新抽签。原始计划保留，后续自评记录用于修正当前状态。</p><p>八字、大运和流年沿用跃渊资料与本机历法计算，作为传统文化参照，不给数值轨迹添加未经验证的吉凶权重。图中区间不是经过人生数据验证的置信区间，模拟分支占比也不表示升职、录用、收入或其他现实结果的成功率。</p></details>
    <p class="life-small">曲线是可以随行动和反馈修正的情景，不是命定结果。人生目标、记录与备份只在你主动保存时写入当前浏览器。</p><p id="life-status" class="life-feedback" role="status"></p>`);
@@ -72,6 +90,9 @@ export function createLifePlanner({root,esc,toast,show,onChart}){
   root.querySelector('#life-branches').innerHTML=result.branches.map((b,i)=>`<article style="--branch-color:${colors[i]}"><span>${b.name}</span><strong>${(b.share*100).toFixed(1)}<small>%</small></strong><p>模拟分支占比</p><div class="life-share"><i style="width:${b.share*100}%"></i></div><small>第 ${month} 个月约 ${round(b.values[month])} / 100</small></article>`).join('');
   root.querySelector('#life-actions').innerHTML=`<p>当前选择：每周投入 <strong>${result.action.hours} 小时</strong>，可用上限 ${profile.budget} 小时。先把目标拆成能检验的小成果。</p><ol>${lifeActions(profile).map(text=>`<li>${esc(text)}</li>`).join('')}</ol>`;
   root.querySelector('#life-goal-title').textContent=profile.title;
+  const origin=active?.date||beijingNow().date,index=monthIndex(origin)+month,year=Math.floor(index/12),calendarMonth=index%12+1;
+  const age=Math.max(0,Math.floor((index-monthIndex(chart.date))/12));
+  root.querySelector('#life-calendar-context').textContent=`${year}年${calendarMonth}月 · 约${age}岁 · 出生排盘参照 ${chart.day}${chart.element}日主`;
   root.querySelector('#life-month').max=profile.horizon;root.querySelector('#life-month').value=month;root.querySelector('#life-month-value').textContent=month;
   root.querySelectorAll('[data-life-policy]').forEach(button=>{const selected=button.dataset.lifePolicy===profile.policy;button.classList.toggle('active',selected);button.setAttribute('aria-pressed',String(selected));});
  }
@@ -107,7 +128,7 @@ export function createLifePlanner({root,esc,toast,show,onChart}){
    const values=Object.fromEntries(new FormData(event.target));
    if(event.target.id==='life-birth-form'){
     birth={date:values.date,time:values.time||'',gender:values.gender,unknown:values.unknown==='on'};
-    if(birth.date>beijingNow().date)throw Error('出生日期不能晚于今天。');chart=birthChart(birth);onChart?.(chart,birth);root.querySelector('#life-birth-result').innerHTML=birthContent();feedback('排盘参照已更新，出生信息仅留在当前页面。');
+    if(birth.date>beijingNow().date)throw Error('出生日期不能晚于今天。');const next=birthChart(birth);chart=next;if(!hasCompleteBirth())throw Error('请填写有效且不晚于当前时刻的出生年月日时。');onChart?.(chart,birth);open(chart);root.querySelector('.life-birth-summary').scrollIntoView({block:'start',behavior:'smooth'});
    }else{
     if(!active||JSON.stringify(active.profile)!==JSON.stringify(profile))throw Error('请先保存当前条件，建立新的跟进计划。');
     if(values.date<active.date||values.date>beijingNow().date)throw Error('请记录计划建立之后、且不晚于今天的实际情况。');
@@ -121,6 +142,7 @@ export function createLifePlanner({root,esc,toast,show,onChart}){
  });
  root.addEventListener('click',event=>{
   const button=event.target.closest('button');if(!button)return;const data=button.dataset;
+  if('lifeEditBirth' in data){chart=null;onChart?.(null,birth);openBirthGate();return;}
   if('lifeControlsDone' in data){root.querySelector('details.life-control-card').open=false;root.querySelector('#life-plot').scrollIntoView({block:'start',behavior:'smooth'});}
   if(data.lifePolicy){profile.policy=data.lifePolicy;root.querySelector('#life-controls [name=policy]').value=profile.policy;compute();renderDynamic();renderRecords();}
   if('lifePlay' in data){

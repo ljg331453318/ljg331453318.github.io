@@ -1,5 +1,5 @@
 import {renderBirthDate} from './birth-date.js?v=20261121-birth';
-import {createLifePlanner} from './life-planner.js?v=20261121-pathways-r4';
+import {createLifePlanner} from './life-planner.js?v=20261121-birth-first';
 import {progressStorage} from './community.js?v=20261121-pathways-r4';
 import {birthChart,manualChart,matchTopics,TOPICS,TRIGRAMS,plumClassic,plumNumbers,plumCalendar} from './yi-engine.js';
 import {LESSONS,SOURCE_FILES,TOPIC_GUIDES} from './study-content.js';
