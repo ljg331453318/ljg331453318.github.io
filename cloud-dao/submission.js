@@ -1,13 +1,27 @@
-import {selectSubmissionDates} from './submission-engine.js?v=20261121-current-inquiry';
+import {selectSubmissionDates,eligibleSlot,chooseDistinctDates} from './submission-engine.js?v=20261121-learning';
+import {featureVector,predict} from './submission-learning.js?v=20261121-learning';
+import {createSubmissionRecords,backgroundFields} from './submission-records.js?v=20261121-learning';
 
-const PRINCIPLE = '以作者的出生年月日时排盘为个人参照，取点击测算当刻的北京时间起梅花易数卦，从问询当日起向后推算，结合八字与黄历给出 SCI 论文投稿的优选吉日。';
-const GUIDANCE = '择日用于文化体验与投稿安排参考。SCI 录用仍取决于论文质量、期刊要求和评审。';
+const PRINCIPLE = '以作者的出生年月日时排盘为个人参照，取点击测算当刻的北京时间起梅花易数卦，从问询当日起向后推算，结合八字与黄历给出 SCI 论文投稿的候选日期与时辰。历史学习仅在自愿提供的数据达到门槛并通过留出验证后参与排序。';
+const GUIDANCE = '目前传统融合规则未经历史数据验证，不代表录用概率。择时用于文化体验与投稿安排参考。SCI 录用仍取决于论文质量、期刊要求和评审。';
 
 export function createSubmissionPicker({panel, esc, beforeOpen}) {
   const root = document.querySelector('#panel-content');
   const dialog = document.querySelector('#panel');
-  let fields = {birthDate:'', birthTime:''};
+  let fields = {birthDate:'', birthTime:'',discipline:'other',tier:'unknown',stage:'first'};
   let result = null;
+  const history = createSubmissionRecords({root,esc,getResult:()=>result,getBackground:()=>({discipline:fields.discipline,tier:fields.tier,stage:fields.stage})});
+  function calculate() {
+    result=selectSubmissionDates(fields);
+    const model=history.getModel();
+    result.learningApplied=false;
+    if(model?.ready) {
+      const pool=result.slots.filter(eligibleSlot).map((candidate,index)=>({candidate,index,score:predict(model,featureVector(candidate,fields))}));
+      pool.sort((a,b)=>b.score-a.score || a.index-b.index);
+      result.preferred=chooseDistinctDates(pool.map(item=>item.candidate));
+      result.learningApplied=pool.length>0;
+    }
+  }
 
   function field(label, name, type, limits = '') {
     return `<label for="submission-${name}">${label}<input id="submission-${name}" name="${name}" type="${type}" value="${esc(fields[name])}" ${limits} required>
@@ -34,13 +48,16 @@ export function createSubmissionPicker({panel, esc, beforeOpen}) {
 <p class="submission-kicker">${index===0?'本次优选':'备选日期'}</p>
 <div class="submission-date">${candidate.date}<small>${candidate.weekday}</small>
 </div>
-<h4>${candidate.day}日 · ${candidate.heavenlySpirit}黄道</h4>
+<p class="submission-time">${candidate.time}–${candidate.endTime}<small>北京时间 UTC+8 · ${candidate.hourPillar}时</small></p>
+<h4>${candidate.day}日 · ${candidate.heavenlySpirit}黄道<br>${candidate.timeHeavenlySpirit}黄道时</h4>
 <ul>
-<li>与已知四柱地支未见六冲</li>
+<li>候选日支、时支与四柱地支均未见六冲</li>
 <li>候选日干为${candidate.element}，对问卦之体为「${candidate.plumRelation}」</li>
-<li>相对作者日主为${candidate.god}${candidate.writing?'，纳入文书与表达的专题参考':''}</li>
+<li>时干对问卦之体为「${candidate.timeRelation}」，对日主为${candidate.timeGod}</li>
+<li>日干相对作者日主为${candidate.god}${candidate.writing?'，纳入文书与表达的专题参考':''}</li>
 <li>${candidate.combinations.length?`日支与${candidate.combinations.join('、')}见六合形态`:'四柱与候选日支未见六合形态'}</li>
 </ul>
+<button class="panel-button outline" type="button" data-save-submission="${index}" ${result.demo?'disabled':''}>${result.demo?'教学示例不可保存':'保存投稿计划'}</button>
 </article>`;
   }
   function results() {
@@ -50,11 +67,12 @@ export function createSubmissionPicker({panel, esc, beforeOpen}) {
 <div class="submission-result-title">
 <div>
 <p class="submission-kicker">起卦时刻 ${esc(input.askDate)} ${esc(input.askTime)} · 北京时间</p>
-<h3>${preferred.length?'从当前问询时刻推算的投稿吉日':'本次未推得优先日期'}</h3>
+<h3>${preferred.length?'从当前问询时刻推算的吉日吉时':'本次未推得优先日期'}</h3>
 </div>
 <button class="panel-button outline" type="button" data-submission-download>下载本次结果</button>
 </div>
-<p>${preferred.length?'本次以点击测算的时刻起卦，融合作者八字向后推算，给出以下优选结果及依据。':'自动推算的后续日期中，尚无同时满足「黄道」及「与四柱地支未见六冲」的日期，可查看下方推算依据。'}</p>
+<p>${preferred.length?'本次以点击测算的时刻起卦，融合作者八字向后推算。时段为传统时辰窗口，不代表该时段内某分钟更容易录用。':'自动推算的后续日期中，尚无同时满足「日、时均为黄道」及「日、时支与四柱未见六冲」的时段，可查看下方推算依据。'}</p>
+<p class="submission-model-note">${result.learningApplied?'本次排序：传统条件筛选候选，再由已通过本站留出验证的历史模型排序。属于试验性参考。':'本次排序仅使用传统规则，历史模型未参与。当前结果尚无录用效果的验证。'}</p>
 <div class="submission-date-grid">${preferred.map(candidateCard).join('')}</div>
 <section class="submission-evidence">
 <h3>作者四柱</h3>
@@ -88,10 +106,10 @@ export function createSubmissionPicker({panel, esc, beforeOpen}) {
 </tr>
 </thead>
 <tbody>${ordered.map(candidate => `<tr>
-<td>${candidate.date}</td>
-<td>${candidate.day}<br>${candidate.heavenlySpirit}${candidate.yellow?'黄道':'黑道'}</td>
-<td>${candidate.clashes.length?`冲${candidate.clashes.join('、')}`:'未见六冲'}<br>${candidate.god}${candidate.combinations.length?`<br>合${candidate.combinations.join('、')}`:''}</td>
-<td>日干${candidate.element}<br>${candidate.plumRelation}</td>
+<td>${candidate.date}<br>${candidate.time}–${candidate.endTime}</td>
+<td>${candidate.day}<br>${candidate.heavenlySpirit}${candidate.yellow?'黄道':'黑道'}<br>${candidate.hourPillar}时 · ${candidate.timeHeavenlySpirit}${candidate.timeYellow?'黄道':'黑道'}</td>
+<td>${candidate.clashes.length?`冲${candidate.clashes.join('、')}`:'未见六冲'}<br>${candidate.god}<br>${candidate.timeClashes.length?'时冲'+candidate.timeClashes.join('、'):'时支未见六冲'}${candidate.combinations.length?`<br>合${candidate.combinations.join('、')}`:''}</td>
+<td>日干${candidate.element}<br>${candidate.plumRelation}<br>时干${candidate.timeRelation}</td>
 </tr>`).join('')}</tbody>
 </table>
 </div>
@@ -102,8 +120,8 @@ export function createSubmissionPicker({panel, esc, beforeOpen}) {
     panel(`<div class="submission-shell">
 <header class="submission-heading">
 <p class="submission-kicker">SCI 论文 · 投稿择日</p>
-<h2>为一份心血，择一日启程。</h2>
-<p>填写出生信息，点击测算即以当前问询时刻起卦，向后推算更合适的投稿吉日。</p>
+<h2>为一份心血，择时启程。</h2>
+<p>填写出生信息，点击测算即以当前问询时刻起卦，向后推算投稿日期与时辰；保存计划后，可持续跟进结果。</p>
 </header>
 <aside class="submission-tip">
 <strong>择日小提示</strong>
@@ -111,6 +129,7 @@ export function createSubmissionPicker({panel, esc, beforeOpen}) {
 <small>${GUIDANCE}</small>
 </aside>
 <p class="submission-clock">出生时刻按北京时间 UTC+8 填写。起卦时刻由系统在点击测算时自动记录。</p>
+<div id="submission-learning"></div>
 <form id="submission-form">
 <div class="submission-form-grid">
 <fieldset>
@@ -121,30 +140,32 @@ export function createSubmissionPicker({panel, esc, beforeOpen}) {
 <aside class="submission-inquiry">
 <strong>以此刻问询，推算投稿吉日</strong>
 <p>${result?`本次起卦 ${esc(result.input.askDate)} ${esc(result.input.askTime)}（北京时间）`:'点击下方按钮时，系统自动记录当前北京时间并起卦。'}</p>
-<p>系统从问询当日起自动向后推算，给出优选日期及备选。</p>
+<p>系统从问询当日起自动向后推算，给出三个候选日的时辰窗口。学习模型启用后，也只对符合传统筛选条件的时段排序。</p>
 </aside>
 </div>
+<div class="submission-fields submission-background">${backgroundFields(fields,esc)}</div>
 <p class="submission-error" id="submission-error" role="alert" hidden>
 </p>
 <div class="submission-actions">
-<button class="panel-button" type="submit">以当前时刻起卦并推算吉日</button>
+<button class="panel-button" type="submit">以当前时刻起卦，推算吉日吉时</button>
 <button class="panel-button outline" type="button" data-submission-demo>试用教学示例</button>
 <button class="submission-text-button" type="button" data-submission-clear>清空出生信息与结果</button>
 </div>
 </form>
 <details class="submission-details">
 <summary>时间口径与本栏融合规则</summary>
-<p>出生与起卦均按北京时间 UTC+8 的民用时刻。每次点击测算都会重新记录问询当刻。系统自问询当日起自动推算 60 个自然日，超出历法支持范围时截断至 2099 年底。每日历法取中午作计算锚点，推荐结果按日期呈现。年、月按节气，日柱零点换日，未校正真太阳时和历史夏令时。问卦按农历年支、月、日与时支取数，闰月沿用月序。上下卦分别除八取余，余 0 作 8；动爻总数除六取余，余 0 作 6。同一时辰内的问询会得到同一时间卦。</p>
-<p>本栏是本站自定的融合体验。优先选黄道日，再减少与作者四柱地支的六冲，随后按候选日干与问卦之体的关系排序，依次为用生体、比和、体克用、体生用、用克体。再参考日干十神中的印星与食伤，以及日支六合形态，同条件按日期先后排列。</p>
-<p>仅将「黄道且未见六冲」的前三天列为优先候选。黄道采用当日十二天神的分类。「印星与食伤」用于文书、表达的本站专题取象。此融合次序为本站约定，未将现代 SCI 投稿列作古籍中的黄历宜忌事项。</p>
+<p>出生与起卦均按北京时间 UTC+8 的民用时刻。每次点击测算都会重新记录问询当刻。系统自问询当日起自动推算 60 个自然日，超出历法支持范围时截断至 2099 年底。逐日逐时辰计算，排除问询之前的窗口。当日已开始的时辰截取问询当刻之后的部分，因此窗口起点可能显示当前分钟；这不表示具备分钟级预测精度。子时按民用日期拆为 23:00–23:59 与 00:00–00:59。年、月按节气，日柱零点换日，未校正真太阳时和历史夏令时。问卦按农历年支、月、日与时支取数，闰月沿用月序。上下卦分别除八取余，余 0 作 8；动爻总数除六取余，余 0 作 6。同一时辰内的问询会得到同一时间卦。</p>
+<p>本栏是本站自定的融合体验。依次比较日黄道、日支六冲、时黄道、时支六冲，再按日干及时干与问卦之体的关系排序，依次为用生体、比和、体克用、体生用、用克体。再参考日干十神中的印星与食伤，以及日支六合形态，同条件按日期先后排列。</p>
+<p>仅在「日、时均黄道且均未见六冲」的候选中选取三个不同日期，各给一个时辰窗口。黄道采用日、时十二天神的分类。历史模型未启用时全部按传统规则；启用后仅对该候选池提供历史排序，下方 60 天明细仍保留传统排序。「印星与食伤」用于文书、表达的本站专题取象。此融合次序为本站约定，未将现代 SCI 投稿列作古籍中的黄历宜忌事项。</p>
 <p>历法沿用本网站的 lunar-javascript，八字和调候沿用已导入的跃渊资料。梅花时间卦可对照《梅花易数》卷一。<a href="https://github.com/6tail/lunar-javascript" target="_blank" rel="noopener noreferrer">历法来源</a> · <a href="https://zh.wikisource.org/zh-hans/梅花易數/卷一" target="_blank" rel="noopener noreferrer">梅花起卦原文</a>
 </p>
-</details>${results()}<p class="submission-privacy">出生与问询时刻仅在本页内存中计算。结果下载由你主动操作，内容请自行保管。</p>
+</details>${results()}<div id="submission-records"></div><p class="submission-privacy">原始出生年月日时只在本页内存计算。仅主动保存计划时才上传页面说明中的派生参照与计划；主动勾选同意才用于历史学习。下载文件包含个人出生信息，请自行保管。</p>
 </div>`);
     dialog.classList.add('submission-panel');
+    history.render();
   }
   const entry = document.querySelector('#submission-entry');
-  entry.addEventListener('click',() => { beforeOpen?.(); open(); });
+  entry.addEventListener('click',() => { beforeOpen?.(); open(); history.load(); });
   entry.disabled = false;
   entry.removeAttribute('aria-busy');
   function invalidateResult() {
@@ -160,7 +181,7 @@ export function createSubmissionPicker({panel, esc, beforeOpen}) {
     event.preventDefault();
     capture();
     try {
-      result = selectSubmissionDates(fields);
+      calculate();
       open();
       root.querySelector('#submission-result').scrollIntoView({block:'start',behavior:'smooth'});
     } catch (error) {
@@ -172,9 +193,11 @@ export function createSubmissionPicker({panel, esc, beforeOpen}) {
   root.addEventListener('click', event => {
     const button = event.target.closest('button');
     if (!button) return;
+    if ('saveSubmission' in button.dataset) history.start(Number(button.dataset.saveSubmission));
     if ('submissionDemo' in button.dataset) {
-      fields = {birthDate:'1990-05-15',birthTime:'10:00'};
-      result = selectSubmissionDates(fields);
+      fields = {...fields,birthDate:'1990-05-15',birthTime:'10:00'};
+      calculate();
+      result.demo=true;
       open();
     }
     if ('submissionClear' in button.dataset) {
@@ -186,9 +209,9 @@ export function createSubmissionPicker({panel, esc, beforeOpen}) {
         `出生 ${input.birthDate} ${input.birthTime}；四柱 ${natal.pillars.join(' ')}`,
         `问询 ${input.askDate} ${input.askTime}；本卦 ${plum.base.name}，互卦 ${plum.mutual.name}，变卦 ${plum.change.name}，${plum.moving}爻动`,
         `体 ${plum.body.name}${plum.body.element}；用 ${plum.use.name}${plum.use.element}`,
-        `优先候选 ${preferred.map(candidate => candidate.date).join('、') || '无'}`,
-        '本站约定的排序为黄道、减少六冲、日干与问卦之体生克、印与食伤取象、六合，再按日期先后。',
-        ...ordered.map(candidate => `${candidate.date} ${candidate.day} ${candidate.heavenlySpirit}${candidate.yellow?'黄道':'黑道'}；${candidate.clashes.length?'冲'+candidate.clashes.join('、'):'未见六冲'}；${candidate.god}；${candidate.plumRelation}`),
+        `优先候选 ${preferred.map(candidate => candidate.date+' '+candidate.time+'–'+candidate.endTime).join('、') || '无'}`,
+        `历史模型${result.learningApplied?'已参与试验性排序':'未参与'}；时辰窗口不具备分钟级精度，当前规则未经录用效果验证。`,
+        ...ordered.map(candidate => `${candidate.date} ${candidate.time}–${candidate.endTime} ${candidate.hourPillar}时 ${candidate.day} ${candidate.heavenlySpirit}${candidate.yellow?'黄道':'黑道'}；${candidate.clashes.length?'冲'+candidate.clashes.join('、'):'未见六冲'}；${candidate.god}；${candidate.plumRelation}`),
         '系统在点击测算时自动取问询时刻起卦，自当日起向后推算60个自然日。时间按北京时间 UTC+8，零点换日，未校真太阳时；调候仅作参考，未自动确定喜用神。'
       ].join('\n\n');
       const url = URL.createObjectURL(new Blob(['\uFEFF'+text],{type:'text/plain;charset=utf-8'}));

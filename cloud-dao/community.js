@@ -47,6 +47,10 @@ async function call(route, body = {}) {
     return result;
   } finally { clearTimeout(timeout); }
 }
+export function submissionService(route, body = {}) {
+  if (!['list','save','model','delete'].includes(route)) throw new Error('投稿请求无效');
+  return call('submission-'+route, body);
+}
 function snapshot() {
   const progress = {};
   for (const key of KEYS) {

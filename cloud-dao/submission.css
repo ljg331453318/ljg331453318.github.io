@@ -535,3 +535,29 @@ dialog.submission-panel {
 }
 .submission-inquiry strong { color: #ead09a; font-size: 18px; font-weight: 400; }
 .submission-inquiry p { font-size: 15px; line-height: 1.9; }
+
+.submission-fields select {
+  width:100%; min-height:47px; margin:7px 0 0; padding:10px;
+  border:1px solid #9aaa83; background:#103329; color:#eee6cc;
+  font-size:16px; border-radius:4px; color-scheme:dark;
+}
+.submission-background { margin-top:22px; }
+.submission-panel .submission-time { font-size:25px; color:#f1d49a; line-height:1.5; margin:14px 0; }
+.submission-time small { display:block; font-size:13px; color:#cddac3; margin-top:7px; }
+.submission-date-card .panel-button { margin-top:20px; width:100%; }
+.submission-panel .submission-model-note { background:#304d3a; padding:14px 18px; border-radius:5px; font-size:14px; }
+.submission-record-editor { padding:20px; border:1px solid #c2aa77; border-radius:6px; margin:22px 0; }
+.submission-record-editor .submission-fields { margin:18px 0; }
+.submission-consent { display:flex; align-items:flex-start; gap:12px; line-height:1.9; font-size:14px; margin:22px 0; }
+.submission-consent input { width:21px; height:21px; flex:0 0 21px; margin-top:4px; accent-color:#d2b97a; }
+.submission-history article { border-top:1px solid #8e9e7566; padding:20px 0; display:flex; gap:20px; justify-content:space-between; align-items:center; }
+.submission-history strong { font-size:18px; color:#ecd49e; font-weight:500; }
+.submission-history p { font-size:14px; margin:8px 0 0; }
+.submission-history .submission-actions { margin:0; }
+.submission-panel button:disabled { opacity:.6; cursor:wait; }
+@media(max-width:700px) {
+  .submission-background { flex-direction:column; align-items:stretch; }
+  .submission-record-editor { padding:16px 12px; }
+  .submission-record-editor .submission-fields { flex-direction:column; align-items:stretch; }
+  .submission-history article { flex-direction:column; align-items:flex-start; gap:12px; }
+}

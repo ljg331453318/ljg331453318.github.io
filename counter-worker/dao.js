@@ -1,3 +1,4 @@
+import {handleSubmissions} from './submissions.js';
 const origins = new Set(['https://ljg331453318.github.io', 'http://127.0.0.1:4175', 'http://localhost:4175']);
 const validId = value => typeof value === 'string' && /^[a-f0-9-]{36}$/.test(value);
 const clean = (value, max) => typeof value === 'string' ? value.trim().slice(0, max) : '';
@@ -26,6 +27,7 @@ export async function handleDao(request, env) {
     const profile = await env.DB.prepare('SELECT * FROM dao_profiles WHERE id=?').bind(id).first();
     if (profile.secret !== secret) return reply({error:'修习凭证不匹配'}, 401);
     const route = new URL(request.url).pathname;
+    if (route.startsWith('/dao/submission-')) return await handleSubmissions(route,body,id,env.DB,reply);
     if (route === '/dao/load') return reply({progress:JSON.parse(profile.progress), revision:profile.revision});
     if (route === '/dao/save') {
       const progress = body.progress;

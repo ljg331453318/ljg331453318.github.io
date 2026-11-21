@@ -1,4 +1,4 @@
-import {progressStorage} from './community.js';
+import {progressStorage} from './community.js?v=20261121-learning';
 import {birthChart,manualChart,matchTopics,TOPICS,TRIGRAMS,plumClassic,plumNumbers,plumCalendar} from './yi-engine.js';
 import {LESSONS,SOURCE_FILES,TOPIC_GUIDES} from './study-content.js';
 

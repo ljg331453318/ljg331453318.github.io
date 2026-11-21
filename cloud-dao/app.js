@@ -1,10 +1,10 @@
-import {prepareProgress,progressStorage,createCommunity} from './community.js';
+import {prepareProgress,progressStorage,createCommunity} from './community.js?v=20261121-learning';
 await prepareProgress();
 import {initWorld,world} from './scene.js';
 import {tracks,articles} from './content.js';
-import {createTempleGame} from './game.js';
-import {createStudy} from './study.js';
-import {createSubmissionPicker} from './submission.js?v=20261121-current-inquiry';
+import {createTempleGame} from './game.js?v=20261121-learning';
+import {createStudy} from './study.js?v=20261121-learning';
+import {createSubmissionPicker} from './submission.js?v=20261121-learning';
 let game=null,study=null;
 const $=s=>document.querySelector(s),icon=n=>`<svg aria-hidden="true"><use href="#i-${n}"/></svg>`;
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
