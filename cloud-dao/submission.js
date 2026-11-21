@@ -143,7 +143,10 @@ export function createSubmissionPicker({panel, esc, beforeOpen}) {
 </div>`);
     dialog.classList.add('submission-panel');
   }
-  document.querySelector('#submission-entry').addEventListener('click',() => { beforeOpen?.(); open(); });
+  const entry = document.querySelector('#submission-entry');
+  entry.addEventListener('click',() => { beforeOpen?.(); open(); });
+  entry.disabled = false;
+  entry.removeAttribute('aria-busy');
   function invalidateResult() {
     result = null;
     const previous = root.querySelector('#submission-result');
