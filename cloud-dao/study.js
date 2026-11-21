@@ -1,3 +1,4 @@
+import {progressStorage} from './community.js';
 import {birthChart,manualChart,matchTopics,TOPICS,TRIGRAMS,plumClassic,plumNumbers,plumCalendar} from './yi-engine.js';
 import {LESSONS,SOURCE_FILES,TOPIC_GUIDES} from './study-content.js';
 
@@ -5,9 +6,9 @@ export function createStudy({world,panel,esc,toast}){
  const root=document.querySelector('#panel-content'),dialog=document.querySelector('#panel');
  let tab='bazi',mode='birth',chart=null,question='',topic='auto',path=[],activeLesson=null,passed=false,sourceToken=0;
  let form={date:'',time:'',gender:'',unknown:false,pillars:['','','','']},plum=plumClassic(),plumMode='classic',step=1,plumInputs={a:'17',b:'29',date:'',time:''};
- let completed=[];try{const v=JSON.parse(localStorage.getItem('cloud-dao-study-v1')||'[]');if(Array.isArray(v))completed=v.filter(id=>LESSONS.some(l=>l.id===id));}catch{}
+ let completed=[];try{const v=JSON.parse(progressStorage.getItem('cloud-dao-study-v1')||'[]');if(Array.isArray(v))completed=v.filter(id=>LESSONS.some(l=>l.id===id));}catch{}
  const button=(text,attrs='',outline=false)=>`<button class="panel-button ${outline?'outline':''}" ${attrs}>${text}</button>`;
- function shell(content){sourceToken++;panel(`<div class="study-shell"><header class="study-heading"><div><div class="panel-overline">藏经阁畔 · 问易台</div><h2>观其象，明其理。</h2><p>八字研习与梅花演示 · 从每一步依据开始</p></div><div class="study-seal" aria-hidden="true">易</div></header><nav class="study-tabs" aria-label="易学研习栏目">${[['bazi','八字分析'],['learn','按需研习'],['meihua','梅花易数'],['sources','资料原典']].map(([id,n])=>`<button data-study-tab="${id}" class="${tab===id?'active':''}" aria-current="${tab===id?'page':'false'}">${n}</button>`).join('')}</nav><main class="study-content">${content}</main><footer class="study-footer">传统术数文化研习 · 计算过程可复核，解释不代表命定结果。出生信息与所问仅在本页内存中处理，关闭页面即清除；仅课程进度保存在本机。</footer></div>`);dialog.classList.add('study-panel');}
+ function shell(content){sourceToken++;panel(`<div class="study-shell"><header class="study-heading"><div><div class="panel-overline">藏经阁畔 · 问易台</div><h2>观其象，明其理。</h2><p>八字研习与梅花演示 · 从每一步依据开始</p></div><div class="study-seal" aria-hidden="true">易</div></header><nav class="study-tabs" aria-label="易学研习栏目">${[['bazi','八字分析'],['learn','按需研习'],['meihua','梅花易数'],['sources','资料原典']].map(([id,n])=>`<button data-study-tab="${id}" class="${tab===id?'active':''}" aria-current="${tab===id?'page':'false'}">${n}</button>`).join('')}</nav><main class="study-content">${content}</main><footer class="study-footer">传统术数文化研习 · 计算过程可复核，解释不代表命定结果。出生信息与所问仅在本页内存中处理，关闭页面即清除；课程完成进度随修习存档保存。</footer></div>`);dialog.classList.add('study-panel');}
  const errorBox=()=>'<p class="study-error" id="study-error" role="alert" hidden></p>';
  function fail(message){const e=root.querySelector('#study-error');if(e){e.hidden=false;e.textContent=message;e.scrollIntoView({block:'nearest',behavior:'smooth'});}else toast(message);}
  function questionFields(){return `<label class="study-label" for="yi-question">此刻想研习什么？<small>可不填；不要写姓名、联系方式等个人信息</small></label><textarea id="yi-question" name="question" rows="2" maxlength="600" placeholder="例如：想了解事业与学业，该从哪些结构学起？">${esc(question)}</textarea><div class="study-form-row"><label>研习主题<select name="topic" id="yi-topic"><option value="auto">按所问匹配</option>${TOPICS.map(t=>`<option value="${t.id}" ${topic===t.id?'selected':''}>${t.name}</option>`).join('')}</select></label><div class="study-inline-action">${button('匹配学习路径','type="button" data-study-recommend',true)}</div></div>`;}
@@ -35,8 +36,8 @@ export function createStudy({world,panel,esc,toast}){
   if('studyClear'in d){form={date:'',time:'',gender:'',unknown:false,pillars:['','','','']};chart=null;question='';topic='auto';openBazi();toast('本页出生信息与所问已清除。');}
   if(d.lesson)openLesson(d.lesson);
   if(d.lessonAnswer!==undefined){const l=LESSONS.find(l=>l.id===activeLesson);if(!l)return;const correct=Number(d.lessonAnswer)===l.answer;passed=correct;root.querySelectorAll('[data-lesson-answer]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));root.querySelector('#quiz-feedback').textContent=(correct?'答对了。':'再想一想。')+l.explain;root.querySelector('[data-lesson-complete]').disabled=!correct||completed.includes(l.id);}
-  if('lessonComplete'in d&&passed&&activeLesson&&!completed.includes(activeLesson)){completed.push(activeLesson);try{localStorage.setItem('cloud-dao-study-v1',JSON.stringify(completed));b.disabled=true;b.textContent='已完成本课';toast('课程进度已记录在本机。');}catch{completed=completed.filter(x=>x!==activeLesson);toast('本课已学完，但浏览器未能保存进度。');}}
-  if('studyResetProgress'in d){completed=[];try{localStorage.removeItem('cloud-dao-study-v1');}catch{}openLearn();toast('课程进度已重置。');}
+  if('lessonComplete'in d&&passed&&activeLesson&&!completed.includes(activeLesson)){completed.push(activeLesson);try{progressStorage.setItem('cloud-dao-study-v1',JSON.stringify(completed));b.disabled=true;b.textContent='已完成本课';toast('课程进度已记录在本机。');}catch{completed=completed.filter(x=>x!==activeLesson);toast('本课已学完，但浏览器未能保存进度。');}}
+  if('studyResetProgress'in d){completed=[];try{progressStorage.removeItem('cloud-dao-study-v1');}catch{}openLearn();toast('课程进度已重置。');}
   if(d.source)openSource(d.source);
   if('studyExport'in d)exportRecord();
   if(d.plumMode){plumMode=d.plumMode;step=1;plum=plumMode==='classic'?plumClassic():null;openMeihua();}

@@ -1,3 +1,4 @@
+import {handleDao} from './dao.js';
 const allowedOrigins = new Set([
   "https://ljg331453318.github.io",
   "http://localhost:4173",
@@ -18,6 +19,7 @@ function json(data, status = 200, origin = "") {
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+    if (url.pathname.startsWith('/dao/')) return handleDao(request, env);
     const origin = request.headers.get("Origin") || "";
 
     if (request.method === "OPTIONS") {

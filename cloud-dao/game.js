@@ -1,13 +1,14 @@
+import {progressStorage} from './community.js';
 import {ingredients,recipes,fortunes,questSteps,createGameState,flag,gather,findRecipe,beginBrew,isHeatHit,finishBrew,turnSeal,sealsSolved,sealHint,plotUnlocked,plant,water,harvest,craftDecor,expandRetreat,currentQuest} from './game-engine.js';
 
 export function createTempleGame(host){
  const {world,panel,closePanel,toast,icon,esc}=host;
- let state;try{state=createGameState(JSON.parse(localStorage.getItem('cloud-dao-play-v1')||'{}'));}catch{state=createGameState();}
+ let state;try{state=createGameState(JSON.parse(progressStorage.getItem('cloud-dao-play-v1')||'{}'));}catch{state=createGameState();}
  let mix={leaf:0,dew:0,moss:0},shakes=0,shaking=false,selectedLot=null,hint=null,steady=false,phaseStarted=0,heat=4,resolving=false,openScreen='';
  const $=s=>document.querySelector(s),names={cloudseed:'云种珠',charm:'松风铃坠',ink:'暮色墨',lantern:'苔光灯芯',bloom:'灵花',ash:'余香灰'};
  const decorNames={charm:'松风铃',ink:'月影画卷',lantern:'苔光灯','cloud-lantern':'守云灯'};
  function reward(key,n){if(state.rewarded.includes(key))return;state.rewarded.push(key);host.reward(n);}
- function persist(){if(currentQuest(state)===-1&&!state.rewarded.includes('first-journey')){state.decor.push('cloud-lantern');state.equipped.push('cloud-lantern');reward('first-journey',50);toast('初次山行已完成，一盏守云灯正在洞天等你。');}try{localStorage.setItem('cloud-dao-play-v1',JSON.stringify(state));}catch{toast('当前浏览器未能保存本次游历。');}updateHud();world.syncGame(state);}
+ function persist(){if(currentQuest(state)===-1&&!state.rewarded.includes('first-journey')){state.decor.push('cloud-lantern');state.equipped.push('cloud-lantern');reward('first-journey',50);toast('初次山行已完成，一盏守云灯正在洞天等你。');}try{progressStorage.setItem('cloud-dao-play-v1',JSON.stringify(state));}catch{toast('当前浏览器未能保存本次游历。');}updateHud();world.syncGame(state);}
  function render(html,wide=false,screen=''){const same=openScreen===screen&&$('#panel').open,scroll=$('#panel').scrollTop;openScreen=screen;panel(html);$('#panel').classList.toggle('game-panel',wide);$('#panel').scrollTop=same?scroll:0;}
  function heading(kicker,title,body=''){return `<div class="panel-overline">${kicker}</div><h2>${title}</h2>${body?`<p>${body}</p>`:''}`;}
  function costs(m){return Object.keys(ingredients).filter(k=>m[k]).map(k=>`${m[k]}份${ingredients[k].name}`).join(' · ');}

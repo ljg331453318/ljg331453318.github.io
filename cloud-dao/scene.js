@@ -156,7 +156,67 @@ function animate(){requestAnimationFrame(animate);const elapsed=clock.getElapsed
  if(furnaceFlames)furnaceFlames.scale.y=.75+(furnaceFlames.userData.heat||0)*.7+Math.sin(elapsed*13)*.08;
  renderer.render(scene,camera);
 }
+const companionModels = new Map();
 export const world={
+ presence() {
+  return {x: avatar?.position.x ?? 0, z: avatar?.position.z ?? 7, area};
+ },
+ setPeers(peers) {
+  if (!scene) return;
+  const current = new Set(peers.map(peer => peer.session));
+  for (const [id, model] of companionModels) {
+   if (current.has(id)) continue;
+   scene.remove(model);
+   model.traverse(object => {
+    object.geometry?.dispose();
+    if (object.material && !Object.values(palette).includes(object.material)) {
+     object.material.map?.dispose();
+     object.material.dispose();
+    }
+   });
+   companionModels.delete(id);
+  }
+  for (const peer of peers) {
+   let model = companionModels.get(peer.session);
+   if (!model) {
+    model = new THREE.Group();
+    cylinder(.23,.38,.95,palette.roofEdge,0,.7,0,model);
+    sphere(.22,palette.skin,0,1.38,0,model);
+    sphere(.22,palette.hair,0,1.48,0,model,1,.65,1);
+    sphere(.08,palette.hair,0,1.66,0,model);
+    scene.add(model);
+    companionModels.set(peer.session,model);
+   }
+   // Keep visitors visible when two people arrive at the same spawn point.
+   const overlap = Math.hypot(peer.x-avatar.position.x,peer.z-avatar.position.z) < .7;
+   const angle = parseInt(peer.session.slice(0,2),16)/256*TAU;
+   model.position.set(peer.x+(overlap?Math.cos(angle)*1.2:0),.2,peer.z+(overlap?Math.sin(angle)*1.2:0));
+   model.visible = peer.area === area && peer.area === 'temple';
+   if (model.userData.name === peer.name) continue;
+   const previous = model.userData.label;
+   if (previous) {
+    model.remove(previous);
+    previous.material.map.dispose();
+    previous.material.dispose();
+   }
+   const canvas = document.createElement('canvas');
+   canvas.width = 512;
+   canvas.height = 96;
+   const ctx = canvas.getContext('2d');
+   ctx.fillStyle = '#163b30dd';
+   ctx.fillRect(0,0,512,96);
+   ctx.fillStyle = '#f2dfaa';
+   ctx.font = '36px sans-serif';
+   ctx.textAlign = 'center';
+   ctx.fillText(peer.name.slice(0,20),256,61,490);
+   const label = new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(canvas),depthTest:false}));
+   label.scale.set(2.8,.52,1);
+   label.position.y = 2.1;
+   model.add(label);
+   model.userData.label = label;
+   model.userData.name = peer.name;
+  }
+ },
  enter(){entered=true;document.body.classList.add('entered');document.getElementById('welcome').inert=true;document.getElementById('adventure-card').inert=false;document.getElementById('scene-labels').inert=false;desiredTarget.set(0,1.2,0);desiredDistance=innerWidth<700?62:36;hooks.location('wander');},
  go(action){if(!entered)this.enter();if(action==='retreat'){area='retreat';avatar.position.set(70,.28,4.1);destination.copy(avatar.position);desiredTarget.set(70,1,-.2);desiredDistance=innerWidth<700?24:19;light.position.set(52,28,15);light.target.position.set(70,0,0);sitting=false;focusRing.visible=false;hooks.location(action);return;}if(area==='retreat'){area='temple';avatar.position.set(0,.18,7.3);light.position.set(-18,28,15);light.target.position.set(0,0,0);}const p=positions[action]||positions.wander;destination.set(...p);sitting=false;focusRing.visible=false;hooks.location(action);if(action==='hall'||action==='fortune'||action==='incense'){desiredTarget.set(0,1.5,-4);desiredDistance=innerWidth<700?37:27;}else if(action==='wander'){desiredTarget.set(0,1.2,0);desiredDistance=innerWidth<700?62:36;}else{desiredTarget.set(p[0]*.5,1.2,p[2]*.5);desiredDistance=innerWidth<700?40:29;}},
  meditate(active){this.go('meditate');sitting=active;focusRing.visible=active;if(active){avatar.position.set(-5.3,.55,3);destination.copy(avatar.position);avatar.rotation.y=.2;desiredTarget.set(-5.3,1.2,3);desiredDistance=innerWidth<700?25:19;}},
