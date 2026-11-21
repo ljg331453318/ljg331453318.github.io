@@ -4,7 +4,7 @@ import {initWorld,world} from './scene.js';
 import {tracks,articles} from './content.js';
 import {createTempleGame} from './game.js';
 import {createStudy} from './study.js';
-import {createSubmissionPicker} from './submission.js';
+import {createSubmissionPicker} from './submission.js?v=20261121-current-inquiry';
 let game=null,study=null;
 const $=s=>document.querySelector(s),icon=n=>`<svg aria-hidden="true"><use href="#i-${n}"/></svg>`;
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));

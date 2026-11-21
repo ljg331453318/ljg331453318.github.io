@@ -1,4 +1,4 @@
-import {selectSubmissionDates} from './submission-engine.js';
+import {selectSubmissionDates} from './submission-engine.js?v=20261121-current-inquiry';
 
 const PRINCIPLE = '以作者的出生年月日时排盘为个人参照，取点击测算当刻的北京时间起梅花易数卦，从问询当日起向后推算，结合八字与黄历给出 SCI 论文投稿的优选吉日。';
 const GUIDANCE = '择日用于文化体验与投稿安排参考。SCI 录用仍取决于论文质量、期刊要求和评审。';
