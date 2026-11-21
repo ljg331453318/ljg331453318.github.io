@@ -4,6 +4,7 @@ import {initWorld,world} from './scene.js';
 import {tracks,articles} from './content.js';
 import {createTempleGame} from './game.js';
 import {createStudy} from './study.js';
+import {createSubmissionPicker} from './submission.js';
 let game=null,study=null;
 const $=s=>document.querySelector(s),icon=n=>`<svg aria-hidden="true"><use href="#i-${n}"/></svg>`;
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -12,7 +13,7 @@ try{data={...initial,...JSON.parse(progressStorage.getItem('cloud-dao-v1')||'{}'
 function save(){try{progressStorage.setItem('cloud-dao-v1',JSON.stringify(data));}catch{toast('当前浏览器未能保存这份记录。');}updateJourney();}
 function updateJourney(){const stage=data.xp>=300?'静山境':data.xp>=100?'青林境':'初心境';$('#journey>span:last-child').innerHTML=stage+`<small id="journey-points">${data.xp} 点静心值</small>`;}
 let toastTimeout;function toast(text){$('#toast').textContent=text;$('#toast').classList.add('visible');clearTimeout(toastTimeout);toastTimeout=setTimeout(()=>$('#toast').classList.remove('visible'),4500);}
-function panel(html){$('#panel').classList.remove('game-panel','study-panel');$('#panel-content').innerHTML=html;$('#panel').scrollTop=0;if(!$('#panel').open)$('#panel').showModal();}
+function panel(html){$('#panel').classList.remove('game-panel','study-panel','submission-panel');$('#panel-content').innerHTML=html;$('#panel').scrollTop=0;if(!$('#panel').open)$('#panel').showModal();}
 function closePanel(){$('#panel').close();}
 $('#close-panel').addEventListener('click',closePanel);$('#panel').addEventListener('click',e=>{if(e.target===$('#panel')){const r=$('#panel').getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)closePanel();}});
 const places={study:['问易台','观其象，明其理；学一页，推一卦。'],wander:['云栖庭院','山中无所求，且自在停留。'],hall:['云栖殿','为心中珍重之事，留一点空处。'],meditate:['静坐台','安然落座，让呼吸自在流转。'],incense:['上香庭','一念随烟起，山中自有回响。'],bell:['山钟','听一声钟响，直至余音散尽。'],library:['藏经阁','读古人之言，照今日之心。'],music:['听松亭','弦声、风声，与音符间的留白。'],journal:['寄语树','留一句心语，寄于枝叶之间。'],fortune:['求签阁','一段心语，静候于竹签之间。'],alchemy:['炼丹院','炉火微起，万般可能。'],gate:['月门','一印转动，邻印相随。'],leaf:['听风松林','采一枝嫩叶，收一点山意。'],dew:['莲池','云种生机，始于一滴莲露。'],moss:['月华小圃','月门深处，有微光静候。'],retreat:['我的洞天','把沿途的小小发现，养成自己的天地。']};
@@ -87,3 +88,5 @@ if(!document.querySelector('.loading.error')){game=createTempleGame({world,panel
 study=createStudy({world,panel,esc,toast});
 
 createCommunity({world,panel,esc,toast});
+
+createSubmissionPicker({panel,esc,beforeOpen:()=>cancelPractice(false)});
