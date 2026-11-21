@@ -1,9 +1,9 @@
 import {selectSubmissionDates,eligibleSlot,chooseDistinctDates} from './submission-engine.js?v=20261121-learning';
 import {featureVector,predict} from './submission-learning.js?v=20261121-learning';
-import {createSubmissionRecords,backgroundFields} from './submission-records.js?v=20261121-learning';
+import {createSubmissionRecords,backgroundFields} from './submission-records.js?v=20261121-clean-ui';
 
-const PRINCIPLE = '以作者的出生年月日时排盘为个人参照，取点击测算当刻的北京时间起梅花易数卦，从问询当日起向后推算，结合八字与黄历给出 SCI 论文投稿的候选日期与时辰。历史学习仅在自愿提供的数据达到门槛并通过留出验证后参与排序。';
-const GUIDANCE = '目前传统融合规则未经历史数据验证，不代表录用概率。择时用于文化体验与投稿安排参考。SCI 录用仍取决于论文质量、期刊要求和评审。';
+const PRINCIPLE = '以作者的出生年月日时排盘为个人参照，取点击测算当刻的北京时间起梅花易数卦，从问询当日起向后推算，结合八字与黄历给出 SCI 论文投稿的候选日期与时辰。';
+const GUIDANCE = '择时仅作传统文化体验与投稿安排参考，论文录用仍取决于稿件质量、期刊要求和评审。';
 
 export function createSubmissionPicker({panel, esc, beforeOpen}) {
   const root = document.querySelector('#panel-content');
@@ -72,7 +72,6 @@ export function createSubmissionPicker({panel, esc, beforeOpen}) {
 <button class="panel-button outline" type="button" data-submission-download>下载本次结果</button>
 </div>
 <p>${preferred.length?'本次以点击测算的时刻起卦，融合作者八字向后推算。时段为传统时辰窗口，不代表该时段内某分钟更容易录用。':'自动推算的后续日期中，尚无同时满足「日、时均为黄道」及「日、时支与四柱未见六冲」的时段，可查看下方推算依据。'}</p>
-<p class="submission-model-note">${result.learningApplied?'本次排序：传统条件筛选候选，再由已通过本站留出验证的历史模型排序。属于试验性参考。':'本次排序仅使用传统规则，历史模型未参与。当前结果尚无录用效果的验证。'}</p>
 <div class="submission-date-grid">${preferred.map(candidateCard).join('')}</div>
 <section class="submission-evidence">
 <h3>作者四柱</h3>
@@ -129,7 +128,6 @@ export function createSubmissionPicker({panel, esc, beforeOpen}) {
 <small>${GUIDANCE}</small>
 </aside>
 <p class="submission-clock">出生时刻按北京时间 UTC+8 填写。起卦时刻由系统在点击测算时自动记录。</p>
-<div id="submission-learning"></div>
 <form id="submission-form">
 <div class="submission-form-grid">
 <fieldset>
@@ -140,7 +138,7 @@ export function createSubmissionPicker({panel, esc, beforeOpen}) {
 <aside class="submission-inquiry">
 <strong>以此刻问询，推算投稿吉日</strong>
 <p>${result?`本次起卦 ${esc(result.input.askDate)} ${esc(result.input.askTime)}（北京时间）`:'点击下方按钮时，系统自动记录当前北京时间并起卦。'}</p>
-<p>系统从问询当日起自动向后推算，给出三个候选日的时辰窗口。学习模型启用后，也只对符合传统筛选条件的时段排序。</p>
+<p>系统从问询当日起自动向后推算，给出三个候选日的时辰窗口。</p>
 </aside>
 </div>
 <div class="submission-fields submission-background">${backgroundFields(fields,esc)}</div>
@@ -156,7 +154,7 @@ export function createSubmissionPicker({panel, esc, beforeOpen}) {
 <summary>时间口径与本栏融合规则</summary>
 <p>出生与起卦均按北京时间 UTC+8 的民用时刻。每次点击测算都会重新记录问询当刻。系统自问询当日起自动推算 60 个自然日，超出历法支持范围时截断至 2099 年底。逐日逐时辰计算，排除问询之前的窗口。当日已开始的时辰截取问询当刻之后的部分，因此窗口起点可能显示当前分钟；这不表示具备分钟级预测精度。子时按民用日期拆为 23:00–23:59 与 00:00–00:59。年、月按节气，日柱零点换日，未校正真太阳时和历史夏令时。问卦按农历年支、月、日与时支取数，闰月沿用月序。上下卦分别除八取余，余 0 作 8；动爻总数除六取余，余 0 作 6。同一时辰内的问询会得到同一时间卦。</p>
 <p>本栏是本站自定的融合体验。依次比较日黄道、日支六冲、时黄道、时支六冲，再按日干及时干与问卦之体的关系排序，依次为用生体、比和、体克用、体生用、用克体。再参考日干十神中的印星与食伤，以及日支六合形态，同条件按日期先后排列。</p>
-<p>仅在「日、时均黄道且均未见六冲」的候选中选取三个不同日期，各给一个时辰窗口。黄道采用日、时十二天神的分类。历史模型未启用时全部按传统规则；启用后仅对该候选池提供历史排序，下方 60 天明细仍保留传统排序。「印星与食伤」用于文书、表达的本站专题取象。此融合次序为本站约定，未将现代 SCI 投稿列作古籍中的黄历宜忌事项。</p>
+<p>仅在「日、时均黄道且均未见六冲」的候选中选取三个不同日期，各给一个时辰窗口。黄道采用日、时十二天神的分类。下方可查看 60 天的传统择时明细。「印星与食伤」用于文书、表达的本站专题取象。此融合次序为本站约定，未将现代 SCI 投稿列作古籍中的黄历宜忌事项。</p>
 <p>历法沿用本网站的 lunar-javascript，八字和调候沿用已导入的跃渊资料。梅花时间卦可对照《梅花易数》卷一。<a href="https://github.com/6tail/lunar-javascript" target="_blank" rel="noopener noreferrer">历法来源</a> · <a href="https://zh.wikisource.org/zh-hans/梅花易數/卷一" target="_blank" rel="noopener noreferrer">梅花起卦原文</a>
 </p>
 </details>${results()}<div id="submission-records"></div><p class="submission-privacy">原始出生年月日时只在本页内存计算。仅主动保存计划时才上传页面说明中的派生参照与计划；主动勾选同意才用于历史学习。下载文件包含个人出生信息，请自行保管。</p>
@@ -210,7 +208,7 @@ export function createSubmissionPicker({panel, esc, beforeOpen}) {
         `问询 ${input.askDate} ${input.askTime}；本卦 ${plum.base.name}，互卦 ${plum.mutual.name}，变卦 ${plum.change.name}，${plum.moving}爻动`,
         `体 ${plum.body.name}${plum.body.element}；用 ${plum.use.name}${plum.use.element}`,
         `优先候选 ${preferred.map(candidate => candidate.date+' '+candidate.time+'–'+candidate.endTime).join('、') || '无'}`,
-        `历史模型${result.learningApplied?'已参与试验性排序':'未参与'}；时辰窗口不具备分钟级精度，当前规则未经录用效果验证。`,
+        '推荐为传统时辰窗口，不表示具备分钟级预测精度。',
         ...ordered.map(candidate => `${candidate.date} ${candidate.time}–${candidate.endTime} ${candidate.hourPillar}时 ${candidate.day} ${candidate.heavenlySpirit}${candidate.yellow?'黄道':'黑道'}；${candidate.clashes.length?'冲'+candidate.clashes.join('、'):'未见六冲'}；${candidate.god}；${candidate.plumRelation}`),
         '系统在点击测算时自动取问询时刻起卦，自当日起向后推算60个自然日。时间按北京时间 UTC+8，零点换日，未校真太阳时；调候仅作参考，未自动确定喜用神。'
       ].join('\n\n');

@@ -13,11 +13,6 @@ export function backgroundFields(values,esc) {
 
 export function createSubmissionRecords({root,esc,getResult,getBackground}) {
   let records=[],model=null,editor=null,loading=false,error='',notice='';
-  function learningText() {
-    if(loading && !model) return '正在读取历史学习状态，读取完成前学习部分不参与推算。';
-    if(!model) return '历史学习服务暂不可用，学习部分不参与推算。';
-    return `${model.ready?'试验性历史模型已启用':'AI 未启用'} · 已获同意的结案记录 ${model.cases} 份（录用 ${model.accepted} / 拒稿 ${model.rejected}）。${model.reason}。`;
-  }
   function form() {
     if(!editor) return '';
     return `<form id="submission-record-form" class="submission-record-editor">
@@ -36,8 +31,6 @@ export function createSubmissionRecords({root,esc,getResult,getBackground}) {
   function render(preserve=true) {
     const active=root.querySelector('#submission-record-form');
     if(preserve && editor && active) editor={...editor,...Object.fromEntries(new FormData(active)),consent:active.elements.consent.checked};
-    const state=root.querySelector('#submission-learning');
-    if(state) state.innerHTML=`<aside class="submission-tip"><strong>历史学习状态</strong><p>${esc(learningText())}</p><small>扩展卡尔曼滤波更新逻辑分类模型；样本不足时权重为零。历史相关性不能证明择时提高录用率。</small><details class="submission-details"><summary>查看学习启用条件与验证方法</summary><p>本站试验门槛：至少 400 份自愿提供的结案记录，录用与拒稿各至少 80 份，至少 30 个匿名作者凭证。按实际投稿时间留出末段 25% 验证，训练时排除验证作者及当时尚未出结果的样本。训练至少 200 份，验证至少 100 份且含 20 位作者。</p><p>仅当留出验证的 Brier 均方误差较基础录用比例降低至少 5%，且按作者聚合的误差差值上界小于零，才参与候选排序。这是本站预设门槛，不是科学有效性的认证。未录用、待定与撤稿同样值得如实记录，待定与撤稿不作二分类标签。</p>${model?.metrics?`<p>当前验证：训练 ${model.metrics.train} 份，验证 ${model.metrics.validation} 份；模型误差 ${model.metrics.modelBrier.toFixed(4)}，基线 ${model.metrics.baselineBrier.toFixed(4)}。</p>`:''}<p>这里的 AI 是逻辑分类机器学习模型，不是大语言模型。数据为用户自报，匿名凭证不等于核验真人作者，本站未验证稿件及结果真实性；存在选择偏差、领域与稿件质量等混杂因素。模型只给试验性排序，不展示个人录用概率，也不声称分钟级预测准确。</p></details></aside>`;
     const host=root.querySelector('#submission-records');
     if(!host) return;
     host.innerHTML=`<section class="submission-evidence"><h3>我的投稿记录</h3><p>免登录，沿用你的修习凭证保存。换设备时可在庭院存档处恢复凭证。记录仅本人可见，保留最近 100 条供查看。</p>
@@ -45,7 +38,7 @@ export function createSubmissionRecords({root,esc,getResult,getBackground}) {
       ${error?`<p class="submission-error" role="alert">${esc(error)}</p>`:''}
       ${form()}
       ${records.length?`<div class="submission-history">${records.map(record=>`<article><div><strong>${esc(record.alias||'我的投稿')}</strong><p>${esc(record.planned.replace('T',' '))}${record.plannedEnd?'–'+esc(record.plannedEnd.slice(11)):''} · ${STATUS[record.status]}<br>${record.actual?`实际投稿 ${esc(record.actual.replace('T',' '))}<br>`:''}${record.decision?`决定 ${esc(record.decision.replace('T',' '))}<br>`:''}${record.consent?'已同意历史学习':'未同意历史学习'}</p></div><div class="submission-actions"><button class="panel-button outline" type="button" data-record-edit="${record.id}">更新结果</button><button class="submission-text-button" type="button" data-record-delete="${record.id}">删除记录</button></div></article>`).join('')}</div>`:!loading&&!error?'<p>还没有保存计划。测算后，在日期卡片上选择「保存投稿计划」。</p>':''}
-      <button type="button" class="submission-text-button" data-record-refresh>刷新记录与学习状态</button></section>`;
+      <button type="button" class="submission-text-button" data-record-refresh>刷新记录</button></section>`;
     conditionalFields();
   }
   function conditionalFields() {
@@ -92,5 +85,5 @@ export function createSubmissionRecords({root,esc,getResult,getBackground}) {
       catch(failure){error='删除失败：'+failure.message;render();}
     }
   });
-  return {render,load,start,getModel:()=>model,learningText};
+  return {render,load,start,getModel:()=>model};
 }

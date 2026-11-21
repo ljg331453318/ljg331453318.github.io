@@ -545,7 +545,6 @@ dialog.submission-panel {
 .submission-panel .submission-time { font-size:25px; color:#f1d49a; line-height:1.5; margin:14px 0; }
 .submission-time small { display:block; font-size:13px; color:#cddac3; margin-top:7px; }
 .submission-date-card .panel-button { margin-top:20px; width:100%; }
-.submission-panel .submission-model-note { background:#304d3a; padding:14px 18px; border-radius:5px; font-size:14px; }
 .submission-record-editor { padding:20px; border:1px solid #c2aa77; border-radius:6px; margin:22px 0; }
 .submission-record-editor .submission-fields { margin:18px 0; }
 .submission-consent { display:flex; align-items:flex-start; gap:12px; line-height:1.9; font-size:14px; margin:22px 0; }
