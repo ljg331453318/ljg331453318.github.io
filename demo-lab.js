@@ -13,14 +13,38 @@ const field = (key,label,type,value,extra={}) => ({key,label,type,value,...extra
 
 const settings = {
   1:{subtitle:'六轴 IMU 的采集、偏置校准、姿态解算与上位机曲线',scope:'地面姿态样机原理演示；无飞控闭环。六轴 IMU 不提供绝对航向。',fields:[field('motion','测试工况','select','往复转动',{options:['静态倾角','往复转动','短时偏航']}),field('bias','陀螺零偏 °/s','range',0.8,{min:0,max:3,step:0.1}),field('gain','加速度校正权重','range',0.03,{min:0,max:0.15,step:0.01}),field('seed','试验种子','number',23,{min:1,max:9999})]},
-  2:{subtitle:'独立真值、GNSS 观测与 IMU 预测的平面定位对照',scope:'松组合 EKF 原理样机。使用合成真值评估；停车时不把 GNSS 航向作为可靠观测。',fields:[field('motion','车辆工况','select','转弯',{options:['直行','转弯','启停']}),field('gnss','GNSS 噪声标准差 m','range',2.2,{min:0.2,max:6,step:0.1}),field('outage','GNSS 中断时长 s','range',4,{min:0,max:15,step:1}),field('seed','试验种子','number',42,{min:1,max:9999})]},
+  2:{
+    subtitle:'电池充放电记录与 SOC 估计',
+    scope:'演示采用一阶 RC 等效电路和扩展卡尔曼滤波，模型参数用于课堂示意。',
+    fields:[
+      field('load','负载工况','select','脉冲与静置',{options:['恒流放电','脉冲与静置']}),
+      field('offset','初始 SOC 偏差（百分点）','range',8,{min:-12,max:12}),
+      field('bias','电流偏置 A','range',0.08,{min:-0.2,max:0.2,step:0.02})
+    ]
+  },
   3:{subtitle:'卫星拒止期间仅前向推算，恢复观测后继续更新',scope:'所有误差使用独立合成真值计算；拒止时不读取未来 GNSS 观测。',fields:[field('motion','运动模式','select','匀速转弯',{options:['直行','匀速转弯','启停']}),field('duration','拒止时长 s','select','10',{options:['5','10','20']}),field('bias','陀螺零偏 °/s','range',0.4,{min:0,max:2,step:0.1}),field('heading','初始航向误差 °','range',1,{min:0,max:8,step:0.5}),field('seed','试验种子','number',73,{min:1,max:9999})]},
   4:{subtitle:'预测新息、卡方门限与连续超限确认',scope:'只检测二维位置观测异常；定位异常不等同于证明 GNSS 欺骗。缺测按超时处理。',fields:[field('anomaly','注入类型','select','位置突变',{options:['正常','位置突变','缓慢漂移','连续缺测']}),field('magnitude','偏置幅度 m / 漂移幅度','range',6,{min:0,max:15,step:0.5}),field('alpha','单次虚警概率 α','select','0.01',{options:['0.05','0.01','0.001']}),field('confirm','连续确认次数','select','2',{options:['1','2','3']}),field('seed','试验种子','number',117,{min:1,max:9999})]},
-  5:{subtitle:'四基站 TWR 测距、二维定位与 IMU 辅助预测',scope:'演示距离观测的非线性定位；基站坐标已知。遮挡产生偏差，不称为有效测距。',fields:[field('geometry','基站布局','select','四角布局',{options:['四角布局','近共线布局']}),field('occlusion','遮挡程度','range',0.1,{min:0,max:1,step:0.05}),field('ranging','测距噪声 m','range',0.2,{min:0.05,max:1.2,step:0.05}),field('seed','试验种子','number',31,{min:1,max:9999})]},
+  5:{
+    subtitle:'桌面色卡随动拍摄',
+    scope:'在同一段合成运动中对比固定与随动拍摄。动画呈现理想化相机响应，实物标定和预测算法由学生完成。',
+    fields:[
+      field('path','色卡运动','select','斜向往返',{options:['水平往返','斜向往返']}),
+      field('camera','拍摄方式','select','随动拍摄',{options:['固定拍摄','随动拍摄']}),
+      field('cover','遮挡工况','select','短时遮挡',{options:['无遮挡','短时遮挡']})
+    ]
+  },
   6:{subtitle:'三辆车的联合 EKF、相对测距与通信丢包',scope:'保留绝对 GNSS 约束和车辆交叉协方差；相对距离不等于绝对位置真值。',fields:[field('scenario','交通场景','select','转弯',{options:['直行','会车','转弯']}),field('loss','测距丢包率','select','10',{options:['0','10','30']}),field('outage','单车 GNSS 中断','select','开启',{options:['关闭','开启']}),field('seed','试验种子','number',52,{min:1,max:9999})]},
   7:{subtitle:'二自由度单轨模型、横摆观测与侧向状态 KF',scope:'限定中等非零车速、小转角与线性轮胎条件；低速近零时不计算侧偏角。',fields:[field('steer','转向工况','select','正弦转向',{options:['阶跃转向','正弦转向','模拟变道']}),field('speed','纵向速度 m/s','select','10',{options:['5','10','15']}),field('stiffness','侧偏刚度失配 %','range',0,{min:-20,max:20,step:5}),field('seed','试验种子','number',87,{min:1,max:9999})]},
   8:{subtitle:'匀速、匀加速和协调转弯候选模型的短时预测',scope:'根据当前与过去观测形成候选；真值只用于事后误差评估，不称为完整 IMM。',fields:[field('motion','测试机动','select','协调转弯',{options:['匀速','匀加速','协调转弯','机动切换']}),field('horizon','预测时域 s','select','3',{options:['1','2','3']}),field('uncertainty','观测噪声 m','range',0.8,{min:0.1,max:3,step:0.1}),field('seed','试验种子','number',64,{min:1,max:9999})]},
-  9:{subtitle:'单图扫描、船舶框选与批量处理界面示意',scope:'使用合成遥感样例演示检测流程。此处是图像处理原型，不能替代训练后的船舶检测模型或独立测试集 AP50。',fields:[field('scene','影像场景','select','近岸',{options:['开阔水域','近岸','港区','无船']}),field('size','输入尺寸 px','select','512',{options:['512','768']}),field('confidence','置信度阈值','range',0.55,{min:0.1,max:0.95,step:0.05}),field('seed','样例种子','number',12,{min:1,max:9999})]},
+  9:{
+    subtitle:'实验小车的毫米波点云与轨迹回放',
+    scope:'小车沿直线导轨移动，页面显示合成点云经速度筛选后的距离轨迹。实物项目须另行采集点云和验证滤波跟踪。',
+    fields:[
+      field('clutter','每帧背景点数','range',18,{min:0,max:45}),
+      field('threshold','径向速度门限 m/s','range',0.08,{min:0.02,max:0.32,step:0.02}),
+      field('gap','观测工况','select','一段缺测',{options:['连续采样','一段缺测']})
+    ]
+  },
   10:{subtitle:'加速度峰值计步、步长标定、航向融合与轨迹推算',scope:'固定携带方式；使用合成加速度/航向序列。无连续真值时只核对检查点和终点。“航向偏置”选项表示磁航向受扰的简化示意。',fields:[field('route','步行路线','select','矩形闭环',{options:['直线','矩形闭环','含转弯']}),field('stride','标定步长 m','range',0.7,{min:0.4,max:1,step:0.02}),field('threshold','计步峰值阈值','range',1.15,{min:0.4,max:2,step:0.05}),field('magnetic','航向偏置','select','关闭',{options:['关闭','开启']}),field('seed','试验种子','number',29,{min:1,max:9999})]}
 };
 
@@ -64,24 +88,53 @@ function sim1(p){
   return {metrics:[['横滚 RMSE',fmt(rmse(e))+'°'],['俯仰 RMSE',fmt(rmse(ep))+'°'],['采样率','100 Hz'],['纯陀螺末端误差',fmt(Math.abs(gyroRoll.at(-1)-roll.at(-1)))+'°']],charts:[seriesChart('横滚角：真值、Mahony 四元数估计与纯积分',[xy(toPoints(roll),'合成参考',colors[0]),xy(toPoints(fusedRoll),'Mahony',colors[2]),xy(toPoints(gyroRoll),'纯陀螺积分',colors[1])],'静态角度参考须由角度夹具独立提供。',true),attitude,seriesChart('俯仰角与相对偏航',[xy(toPoints(pitch),'参考俯仰',colors[0]),xy(toPoints(fusedPitch),'估计俯仰',colors[2]),xy(toPoints(fusedYaw),'相对偏航',colors[1])])],headers:['时间 s','参考横滚 °','角速度 °/s','加计 x g','加计 y g','加计 z g','估计横滚 °','估计俯仰 °','估计偏航 °'],rows:raw,explain:'以 100 Hz 对合成角速度作四元数积分和归一化，用重力方向反馈校正横滚与俯仰；非重力加速度较大时降低校正权重。真实样机仍须完成 I²C/SPI 采集、串口协议、角度夹具和端到端延迟验证。'};
 }
 
-function sim2(p){
-  const r=rng(+p.seed),truth=[],gnss=[],est=[],err=[],speedTruth=[],speedEst=[],rows=[],dt=.2;
-  let x=0,y=0,h=0,oldSpeed=0,s=[0,0,0,0],P=[[4,0,0,0],[0,4,0,0],[0,0,2,0],[0,0,0,.08]];
-  const Q=[.015,.015,.07,.001];
-  const update=(axis,z)=>{const S=P[axis][axis]+p.gnss*p.gnss,K=P.map(row=>row[axis]/S),innovation=z-s[axis],prior=P.map(row=>[...row]);s=s.map((v,i)=>v+K[i]*innovation);P=P.map((row,i)=>row.map((v,j)=>v-K[i]*prior[axis][j]));};
-  for(let i=0;i<160;i++){
-    const t=i*dt,v=p.motion==='启停'?(i%55<12?0:2):2.2,turn=p.motion==='转弯'?.032:0;h+=turn;x+=v*dt*Math.cos(h);y+=v*dt*Math.sin(h);truth.push([x,y]);
-    const imuA=(v-oldSpeed)/dt+noise(r)*.22,imuYaw=turn/dt+noise(r)*.01;oldSpeed=v;
-    const h0=s[3],v0=s[2],F=[[1,0,dt*Math.cos(h0),-v0*dt*Math.sin(h0)],[0,1,dt*Math.sin(h0),v0*dt*Math.cos(h0)],[0,0,1,0],[0,0,0,1]];
-    s=[s[0]+v0*dt*Math.cos(h0),s[1]+v0*dt*Math.sin(h0),v0+imuA*dt,h0+imuYaw*dt];
-    const FP=F.map(row=>P[0].map((_,j)=>row.reduce((sum,v,k)=>sum+v*P[k][j],0)));
-    P=FP.map((row,a)=>row.map((_,b)=>row.reduce((sum,v,k)=>sum+v*F[b][k],0)+(a===b?Q[a]:0)));
-    const missing=t>=12&&t<12+(+p.outage),observed=i%5===0&&!missing;
-    if(observed){const zx=x+noise(r)*(+p.gnss),zy=y+noise(r)*(+p.gnss);update(0,zx);update(1,zy);gnss.push([zx,zy]);}
-    est.push([s[0],s[1]]);err.push([t,Math.hypot(s[0]-x,s[1]-y)]);speedTruth.push([t,v]);speedEst.push([t,s[2]]);rows.push([fmt(t),fmt(x),fmt(y),observed?'GNSS 更新':'IMU 预测',fmt(s[0]),fmt(s[1]),fmt(Math.hypot(s[0]-x,s[1]-y))]);
+function sim2(p) {
+  const dt = 5, capacityAh = 2.5, a = Math.exp(-dt / 45);
+  const random = rng(2026);
+  const ocv = z => 3.1 + 0.65 * z + 0.32 * z * z;
+  let charge = 0.78, polarization = 0, estimate = charge + Number(p.offset) / 100;
+  let integral = estimate, estimatedDrop = 0;
+  let p00 = 0.02, p01 = 0, p11 = 0.0001;
+  const frames = [];
+  for (let k = 0; k < 240; k++) {
+    const pulse = [1.6, 0, 0.8, -0.6][Math.floor(k / 20) % 4];
+    const current = p.load === '恒流放电' ? 1.3 : pulse;
+    const measuredCurrent = current + Number(p.bias);
+    charge -= current * dt / (3600 * capacityAh);
+    polarization = a * polarization + (1 - a) * 0.04 * current;
+    const voltage = ocv(charge) - 0.06 * current - polarization + 0.007 * noise(random);
+    integral -= measuredCurrent * dt / (3600 * capacityAh);
+    estimate -= measuredCurrent * dt / (3600 * capacityAh);
+    estimatedDrop = a * estimatedDrop + (1 - a) * 0.04 * measuredCurrent;
+    p00 += 1e-8;
+    p01 *= a;
+    p11 = a * a * p11 + 1e-7;
+    const slope = 0.65 + 0.64 * estimate;
+    const c0 = slope * p00 - p01, c1 = slope * p01 - p11;
+    const variance = slope * c0 - c1 + 0.007 ** 2;
+    const residual = voltage - (ocv(estimate) - 0.06 * measuredCurrent - estimatedDrop);
+    estimate += c0 / variance * residual;
+    estimatedDrop += c1 / variance * residual;
+    p00 -= c0 * c0 / variance;
+    p01 -= c0 * c1 / variance;
+    p11 -= c1 * c1 / variance;
+    frames.push({time:(k + 1) * dt, current:measuredCurrent, voltage, estimate:100*estimate, integral:100*integral, reference:100*charge});
   }
-  const errors=est.map((v,i)=>dist(v,truth[i]));
-  return {metrics:[['融合 RMSE',fmt(rmse(errors))+' m'],['95% 误差',fmt([...errors].sort((a,b)=>a-b)[Math.floor(errors.length*.95)])+' m'],['GNSS 更新次数',gnss.length],['连续输出率','100%']],charts:[seriesChart('车辆轨迹：独立真值、GNSS 观测与融合输出',[xy(truth,'独立真值',colors[0]),xy(gnss,'GNSS 观测',colors[1]),xy(est,'融合输出',colors[2])],'停车时不从静止位置点构造航向。',true),seriesChart('位置误差随时间',[xy(err,'融合误差',colors[2])]),seriesChart('速度估计与工况',[xy(speedTruth,'真值速度',colors[0]),xy(speedEst,'EKF 速度',colors[2])])],headers:['时间 s','真值东 m','真值北 m','更新状态','估计东 m','估计北 m','误差 m'],rows,explain:'平面状态为位置、速度和航向；合成 IMU 加速度与角速度用于非线性预测，GNSS 位置用于低频更新，协方差由雅可比传播。实车应另用独立 RTK 或测量参考验证，并完成时间同步与零偏标定。'};
+  const scene = customChart('电池测试台 · 采样回放', (ctx,w,h,progress) => {
+    const f = frames[Math.floor(progress * (frames.length - 1))];
+    ctx.strokeStyle=colors[0]; ctx.lineWidth=4;
+    ctx.strokeRect(68,93,165,172);ctx.fillStyle=colors[0];ctx.fillRect(119,79,60,14);
+    const level=162*clamp(f.estimate/100,0,1);
+    ctx.fillStyle='#c2e5db';ctx.fillRect(73,260-level,155,level);
+    ctx.fillStyle='#143f4d';ctx.font='bold 32px sans-serif';ctx.fillText(fmt(f.estimate,1)+'%',99,196);
+    ctx.font='22px sans-serif';ctx.fillText('SOC 估计',98,305);
+    ctx.font='26px sans-serif';
+    ['采样时间   '+f.time+' s','端电压   '+fmt(f.voltage,3)+' V','采样电流   '+fmt(f.current,2)+' A'].forEach((line,i)=>ctx.fillText(line,320,119+i*58));
+  },'正电流表示放电。端电压由等效电路生成，电流偏置只加入测量通道。',true);
+  const curve=(key,label,color)=>xy(frames.map(f=>[f.time,f[key]]),label,color);
+  return {charts:[scene,seriesChart('荷电状态随时间变化',[
+    curve('reference','合成参考',colors[2]),curve('integral','库仑积分',colors[1]),curve('estimate','扩展卡尔曼估计',colors[0])
+  ],'横轴为时间（s），纵轴为 SOC（%）。',true)]};
 }
 
 function sim3(p){
@@ -111,24 +164,47 @@ function sim4(p){
   return {metrics:[['二维 NIS 门限',fmt(threshold)],['事件检测',activeEvents?(miss?'漏检':'检出'):'无注入'],['首次告警延迟',alarmAt===null?'—':Math.max(0,alarmAt-42)+' 帧'],['正常段误报事件',falseAlarmEvents+' 次']],charts:[seriesChart('预测新息统计量与 χ²₂ 门限',[xy(data,'NIS',colors[0]),xy(gate,'门限',colors[1])],'缺测样本留空并产生独立超时事件，不能代入卡方检验。',true)],headers:['帧','东向新息 m','NIS','门限','检测状态'],rows,explain:`门限基于二维、各向同性且方差为 1.21 m² 的简化新息模型与 α=${p.alpha} 计算。正常段误报按连续告警事件计数；这只是单条合成序列示意，不能据此宣称经验虚警率。`};
 }
 
-function sim5(p){
-  const r=rng(+p.seed),anchors=p.geometry==='四角布局'?[[0,0],[12,0],[12,8],[0,8]]:[[0,0],[4,0.15],[8,-.12],[12,.1]],truth=[],uwb=[],fused=[],residual=[],rows=[],dt=.1;
-  let s=[2,4,0,0],P=[[4,0,0,0],[0,4,0,0],[0,0,2,0],[0,0,0,2]],prevV=[0,0],accepted=0;
-  const F=[[1,0,dt,0],[0,1,0,dt],[0,0,1,0],[0,0,0,1]];
-  for(let i=0;i<105;i++){
-    const t=i*.1,x=2+8*i/104,y=4+2*Math.sin(i*.075),ranges=anchors.map((a,j)=>dist([x,y],a)+noise(r)*(+p.ranging)+(j===2&&i>35&&i<75?(+p.occlusion)*3:0));
-    const velocity=[(x-(truth.at(-1)?.[0]??x))/dt,(y-(truth.at(-1)?.[1]??y))/dt],imu=[(velocity[0]-prevV[0])/dt+noise(r)*.08,(velocity[1]-prevV[1])/dt+noise(r)*.08];prevV=velocity;
-    s=[s[0]+s[2]*dt+.5*imu[0]*dt*dt,s[1]+s[3]*dt+.5*imu[1]*dt*dt,s[2]+imu[0]*dt,s[3]+imu[1]*dt];
-    const FP=F.map(row=>P[0].map((_,j)=>row.reduce((sum,v,k)=>sum+v*P[k][j],0)));
-    P=FP.map((row,a)=>row.map((_,b)=>row.reduce((sum,v,k)=>sum+v*F[b][k],0)+(a===b?(a<2?.01:.05):0)));
-    let ux=s[0],uy=s[1];for(let k=0;k<5;k++){let gx=0,gy=0,denx=0,deny=0;anchors.forEach((a,j)=>{const d=Math.max(.1,dist([ux,uy],a)),e=ranges[j]-d,hx=(ux-a[0])/d,hy=(uy-a[1])/d;gx+=e*hx;gy+=e*hy;denx+=hx*hx;deny+=hy*hy;});ux+=gx/Math.max(denx,1);uy+=gy/Math.max(deny,1);}
-    anchors.forEach((a,j)=>{const d=Math.max(.1,dist([s[0],s[1]],a)),H=[(s[0]-a[0])/d,(s[1]-a[1])/d,0,0],innov=ranges[j]-d;
-      if(Math.abs(innov)>1.3+4*(+p.ranging))return;
-      const PH=P.map(row=>row.reduce((sum,v,k)=>sum+v*H[k],0)),S=H.reduce((sum,v,k)=>sum+v*PH[k],p.ranging*p.ranging),K=PH.map(v=>v/S),prior=P.map(row=>[...row]);s=s.map((v,k)=>v+K[k]*innov);P=P.map((row,k)=>row.map((v,l)=>v-K[k]*H.reduce((sum,h,m)=>sum+h*prior[m][l],0)));accepted++;});
-    truth.push([x,y]);uwb.push([ux,uy]);fused.push([s[0],s[1]]);residual.push([i*.1,Math.abs(ranges[2]-dist([s[0],s[1]],anchors[2]))]);rows.push([fmt(t),...ranges.map(v=>fmt(v)),fmt(ux),fmt(uy),fmt(s[0]),fmt(s[1])]);
+function sim5(p) {
+  const frames = [];
+  let cameraX=0, cameraY=0;
+  for (let k=0;k<320;k++) {
+    const time=k/20;
+    const x=32*Math.sin(time*0.8);
+    const y=p.path==='水平往返'?0:15*Math.sin(time*0.8+0.4);
+    const hidden=p.cover==='短时遮挡' && time>=6 && time<7.5;
+    const dx=x-cameraX, dy=y-cameraY;
+    frames.push({time,x,y,cameraX,cameraY,dx,dy,hidden});
+    if (!hidden && p.camera==='随动拍摄') {
+      cameraX+=0.12*dx;
+      cameraY+=0.12*dy;
+    }
   }
-  const e=fused.map((v,i)=>dist(v,truth[i]));
-  return {metrics:[['融合 RMSE',fmt(rmse(e))+' m'],['95% 位置误差',fmt([...e].sort((a,b)=>a-b)[99])+' m'],['有效测距率',fmt(accepted/(105*4)*100,1)+'%'],['基站布局',p.geometry]],charts:[seriesChart('室内轨迹与基站布局',[xy(truth,'独立真值',colors[0]),xy(uwb,'单 UWB',colors[1]),xy(fused,'UWB/IMU',colors[2]),xy(anchors,'4 个基站',colors[3])],'近共线基站可观察几何退化。',true),seriesChart('第 3 基站测距残差',[xy(residual,'残差',colors[1])])],headers:['时间 s','距基站1 m','距基站2 m','距基站3 m','距基站4 m','UWB东 m','UWB北 m','融合东 m','融合北 m'],rows,explain:'四状态 EKF 用合成 IMU 加速度预测位置与速度，按各基站非线性距离观测逐条更新；过大残差暂不用于更新。真实试验须测量基站坐标，并单独记录遮挡、缺测和非视距偏差。'};
+  const scene=customChart('桌面色卡与相机取景', (ctx,w,h,progress)=>{
+    const f=frames[Math.floor(progress*(frames.length-1))];
+    ctx.font='22px sans-serif';ctx.fillStyle='#203846';
+    ctx.fillText('桌面全景',36,48);ctx.fillText('云台相机画面',426,48);
+    ctx.strokeStyle='#a5b7c0';ctx.lineWidth=2;
+    ctx.strokeRect(35,68,330,225);ctx.strokeRect(425,68,340,225);
+    ctx.strokeStyle='#688693';ctx.setLineDash([5,5]);
+    ctx.strokeRect(200+f.cameraX-49,180+f.cameraY-31,98,62);
+    ctx.setLineDash([]);
+    ctx.fillStyle='#d28835';ctx.fillRect(190+f.x,170+f.y,20,20);
+    ctx.save();ctx.beginPath();ctx.rect(426,69,338,223);ctx.clip();
+    // A magnified view into the same desk coordinates as the left frame.
+    ctx.fillStyle='#f2f5f5';
+    for(let j=-4;j<=4;j++)ctx.fillRect(595+(j*40-f.cameraX)*3.4,69,2,223);
+    if(f.hidden){ctx.fillStyle='#dbe1e4';ctx.fillRect(426,69,338,223);}
+    else{ctx.fillStyle='#d28835';ctx.fillRect(595+(f.dx-10)*3.4,180+(f.dy-10)*3.6,68,72);}
+    ctx.restore();
+    ctx.strokeStyle=colors[0];ctx.beginPath();ctx.arc(595,180,5,0,Math.PI*2);ctx.stroke();
+    ctx.font='19px sans-serif';ctx.fillStyle='#203846';
+    ctx.fillText('虚线框为相机视野',35,327);
+    ctx.fillText(f.hidden?'遮挡 · 暂停更新':('时间 '+fmt(f.time,1)+' s'),425,327);
+  },'桌面全景保留色卡位置。取景窗口仅显示相机可见区域，圆点为图像中心。',true);
+  const offset=(key,scale,label,color)=>xy(frames.map(f=>f.hidden?null:[f.time,scale*f[key]]),label,color);
+  return {charts:[scene,seriesChart('可见帧的居中偏差',[
+    offset('dx',3.4,'水平偏差',colors[0]),offset('dy',3.6,'垂直偏差',colors[1])
+  ],'横轴为时间（s），纵轴为画面偏差（示意像素）。遮挡期间留空。',true)]};
 }
 
 function sim6(p){
@@ -182,16 +258,53 @@ function sim8(p){
   return {metrics:[['预测 ADE',fmt(ade)+' m'],['预测 FDE',fmt(fde)+' m'],['主导模型',['匀速','匀加速','协调转弯'][selected]],['模型概率',probs.map(v=>fmt(v,2)).join(' / ')]],charts:[seriesChart('观测历史与短时候选航迹',[xy(history.slice(0,k+1),'历史观测',colors[0]),...candidates.map((v,j)=>xy([now,...v],['匀速','匀加速','协调转弯'][j],colors[j+1]))],'仅显示当前观测和向前推演的候选航迹；未来真值不进入预测画面。',true),customChart('候选模型权重示意',(ctx,w,h,progress)=>{const names=['匀速','匀加速','协调转弯'];probs.forEach((v,j)=>{ctx.fillStyle=colors[j+1];ctx.fillRect(90,48+j*83,(w-180)*v*progress,35);ctx.fillStyle='#33485c';ctx.font='15px Arial';ctx.fillText(names[j],90,38+j*83);});})],headers:['预测时域 s','参考轨迹东','参考轨迹北','预测东','预测北','位置误差'],rows,explain:'依据历史观测形成匀速、匀加速和协调转弯候选，再用一步预测残差构造启发式权重并选取主导模型。这里不是完整 IMM，模型权重仅作教学示意。'};
 }
 
-function sim9(p){
-  const r=rng(+p.seed),scene=p.scene,W=p.size==='768'?192:128,H=Math.round(W*7/16),pixels=new Uint8Array(W*H),index=(x,y)=>y*W+x;
-  for(let y=0;y<H;y++)for(let x=0;x<W;x++){const land=(scene==='近岸'||scene==='港区')&&x<W*(.11+.09*y/H);pixels[index(x,y)]=land?170+Math.floor(r()*15):132+Math.floor(r()*18);}
-  const count=scene==='无船'?0:scene==='港区'?10:scene==='开阔水域'?5:7;
-  for(let i=0;i<count;i++){const cx=10+Math.floor(r()*(W-20)),cy=7+Math.floor(r()*(H-14)),rx=3+Math.floor(r()*4),ry=1.4+r();for(let y=Math.max(0,cy-4);y<Math.min(H,cy+5);y++)for(let x=Math.max(0,cx-rx-2);x<Math.min(W,cx+rx+3);x++){const dx=x-cx,dy=y-cy;if((dx*dx)/(rx*rx)+(dy*dy)/(ry*ry)<1)pixels[index(x,y)]=238+Math.floor(r()*17);}}
-  if(scene==='港区'){for(let y=8;y<14;y++)for(let x=5;x<14;x++)pixels[index(x,y)]=232;}
-  const seen=new Uint8Array(W*H),candidates=[];for(let y=0;y<H;y++)for(let x=0;x<W;x++){const start=index(x,y);if(seen[start]||pixels[start]<218)continue;const queue=[start];seen[start]=1;let minx=x,maxx=x,miny=y,maxy=y,sum=0;for(let head=0;head<queue.length;head++){const v=queue[head],cx=v%W,cy=Math.floor(v/W);sum+=pixels[v];minx=Math.min(minx,cx);maxx=Math.max(maxx,cx);miny=Math.min(miny,cy);maxy=Math.max(maxy,cy);for(const [nx,ny] of [[cx-1,cy],[cx+1,cy],[cx,cy-1],[cx,cy+1]]){if(nx<0||ny<0||nx>=W||ny>=H)continue;const k=index(nx,ny);if(!seen[k]&&pixels[k]>=218){seen[k]=1;queue.push(k);}}}if(queue.length<5)continue;const width=maxx-minx+1,height=maxy-miny+1,aspect=width/Math.max(height,1),confidence=clamp(.43+.055*aspect+.006*queue.length+.001*(sum/queue.length-218),.1,.99);candidates.push({x:minx,y:miny,w:width,h:height,conf:confidence});}
-  const filtered=candidates.filter(o=>o.conf>=+p.confidence),rows=filtered.map((o,i)=>[i+1,o.x,o.y,o.w,o.h,fmt(o.conf),scene]);
-  const image=customChart('遥感图像扫描与船舶框选示意',(ctx,w,h,progress)=>{const temp=document.createElement('canvas');temp.width=W;temp.height=H;const tctx=temp.getContext('2d'),data=tctx.createImageData(W,H);for(let i=0;i<pixels.length;i++){const v=pixels[i];data.data[4*i]=v-20;data.data[4*i+1]=v;data.data[4*i+2]=Math.min(255,v+12);data.data[4*i+3]=255;}tctx.putImageData(data,0,0);ctx.imageSmoothingEnabled=true;ctx.drawImage(temp,0,0,w,h);ctx.fillStyle='rgba(255,255,255,.60)';ctx.fillRect(0,progress*h,w,(1-progress)*h);ctx.strokeStyle='#155b4c';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(0,progress*h);ctx.lineTo(w,progress*h);ctx.stroke();filtered.filter(o=>o.y+o.h<=progress*H).forEach(o=>{ctx.strokeStyle='#17856c';ctx.lineWidth=2;ctx.strokeRect(o.x/W*w,o.y/H*h,o.w/W*w,o.h/H*h);});},'扫描与框选为合成画面示意；真实毕业设计须训练并测试检测模型。',true);
-  return {metrics:[['检测框数',filtered.length+' 个'],['连通域候选',candidates.length+' 个'],['置信度门限',fmt(p.confidence)],['输入规格',p.size+' px']],charts:[image,customChart('批量处理流程',(ctx,w,h,progress)=>{const labels=['导入影像','逐张扫描','保存标注','导出记录'],active=Math.min(3,Math.floor(progress*4));ctx.font='16px Arial';labels.forEach((label,i)=>{const x=45+i*(w-90)/4,boxW=(w-120)/4;ctx.fillStyle=i<=active?'#e8f0f5':'#fff';ctx.fillRect(x,120,boxW,70);ctx.strokeStyle=i<=active?'#155b82':'#cbd8e0';ctx.lineWidth=2;ctx.strokeRect(x,120,boxW,70);ctx.fillStyle='#2d4e66';ctx.fillText(label,x+18,162);if(i<3){ctx.fillStyle='#8aa1b0';ctx.fillText('→',x+boxW+8,162);}});},'学生需实现单图检测、批量处理、标注保存和记录导出。')],headers:['编号','左上角 x','左上角 y','宽','高','示意置信度','场景'],rows,explain:'本演示在合成像素图上实际执行阈值分割与连通域定位。真实毕业设计需从 Airbus 标注解码 RLE、按影像划分训练/验证/测试集，迁移训练轻量检测模型，并在独立测试集报告 AP50、查准率、查全率与耗时。'};
+function sim9(p) {
+  const random=rng(913);
+  const frames=[];
+  let lastSeen=null;
+  for(let k=0;k<240;k++){
+    const time=k/12;
+    const range=1.8+0.85*Math.sin(0.55*time);
+    const speed=0.85*0.55*Math.cos(0.55*time);
+    const points=[];
+    for(let j=0;j<Number(p.clutter);j++){
+      points.push({r:0.45+random()*2.8,y:0.62*noise(random),v:0.015*noise(random)});
+    }
+    const missing=p.gap==='一段缺测' && k>=84 && k<102;
+    if(!missing){
+      for(let j=0;j<6;j++)points.push({r:range+0.035*noise(random),y:0.045*noise(random),v:speed+0.02*noise(random)});
+    }
+    const moving=points.filter(point=>Math.abs(point.v)>=Number(p.threshold) && Math.abs(point.y)<0.20);
+    const detected=moving.length>=3?mean(moving.map(point=>point.r)):null;
+    if(detected!==null)lastSeen=lastSeen===null?detected:0.6*detected+0.4*lastSeen;
+    else lastSeen=null;
+    frames.push({time,range,points,moving,detected,track:lastSeen});
+  }
+  const scene=customChart('直线导轨 · 雷达点云俯视图',(ctx,w,h,progress)=>{
+    const f=frames[Math.floor(progress*(frames.length-1))];
+    const X=r=>80+196*r,Y=y=>175-85*y;
+    ctx.save();ctx.beginPath();ctx.rect(65,55,680,220);ctx.clip();
+    ctx.fillStyle='#f1f4f4';ctx.fillRect(70,Y(0.2),680,34);
+    for(const point of f.points){
+      ctx.fillStyle=f.moving.includes(point)?colors[1]:'#a5b4bf';
+      ctx.beginPath();ctx.arc(X(point.r),Y(point.y),4,0,Math.PI*2);ctx.fill();
+    }
+    if(f.track!==null){
+      ctx.strokeStyle=colors[0];ctx.lineWidth=3;ctx.strokeRect(X(f.track)-19,Y(0)-18,38,36);
+    }
+    ctx.restore();
+    ctx.font='20px sans-serif';ctx.fillStyle='#203846';
+    ctx.fillText('雷达',28,215);ctx.fillStyle=colors[0];ctx.fillRect(64,161,12,28);
+    ctx.fillStyle='#203846';ctx.fillText('第 '+(1+Math.floor(progress*(frames.length-1)))+' 帧',45,40);
+    ctx.fillText(f.detected===null?'本帧无有效检测':'检测距离 '+fmt(f.detected)+' m',450,40);
+    for(let m=0;m<=3;m++){
+      ctx.fillRect(X(m),265,1,8);ctx.fillText(m+' m',X(m)-8,302);
+    }
+  },'灰点为原始反射，橙点为筛选后的候选点，蓝框表示已形成的小车轨迹。',true);
+  const data=key=>frames.map(f=>f[key]===null?null:[f.time,f[key]]);
+  return {charts:[scene,seriesChart('沿导轨的距离记录',[
+    xy(data('range'),'小车参考',colors[2]),xy(data('track'),'检测轨迹',colors[0])
+  ],'横轴为时间（s），纵轴为距离（m）。缺测留空，可观察小车换向时速度门限对轨迹连续性的影响。',true)]};
 }
 
 function sim10(p){
@@ -261,7 +374,7 @@ function renderRun() {
   paint();
 }
 
-async function boot(){if(!settings[id]){root.textContent='未找到演示题目。';return;}const [topics,references]=await Promise.all([fetch('../grad-topics.json').then(r=>r.json()),fetch('../grad-references.json').then(r=>r.json())]);const topic=topics.find(v=>v.id===id),cfg=settings[id];document.title=topic.title+' · 动态演示';document.getElementById('page-title').textContent=topic.title;document.getElementById('page-subtitle').textContent=cfg.subtitle;document.getElementById('page-scope').textContent=cfg.scope;
+async function boot(){if(!settings[id]){root.textContent='未找到演示题目。';return;}const [topics,references]=await Promise.all([fetch('../grad-topics.json?v=20261122-topics').then(r=>r.json()),fetch('../grad-references.json?v=20261122-topics').then(r=>r.json())]);const topic=topics.find(v=>v.id===id),cfg=settings[id];document.title=topic.title+' · 动态演示';document.getElementById('page-title').textContent=topic.title;document.getElementById('page-subtitle').textContent=cfg.subtitle;document.getElementById('page-scope').textContent=cfg.scope;
   const cited=new Set();for(const match of topic.sections['研究依据与适用性'].matchAll(/\[(\d+)(?:\s*[-–]\s*(\d+))?\]/g)){for(let number=Number(match[1]);number<=Number(match[2]||match[1]);number++)cited.add(number);}
   const relevant=references.filter(value=>cited.has(Number(value.match(/^\[(\d+)\]/)?.[1])));
   root.innerHTML=`<div class="lab"><aside class="controls panel"><h2>场景与参数</h2>${cfg.fields.map(fieldHtml).join('')}<div class="buttons"><button id="run">重新演示</button></div><div class="control-help"><strong>需要完成的设计任务</strong><p>${htmlEscape(topic.sections['设计任务1'])}</p><p>${htmlEscape(topic.sections['设计任务2'])}</p><p>${htmlEscape(topic.sections['设计任务3'])}</p></div></aside><div class="results"><div class="results-top"><h2>动态界面示意</h2><p class="status">合成场景 · 非毕业设计结果</p></div><div class="playback"><button id="play-toggle" type="button">暂停</button><button id="rewind" type="button" class="secondary">重置</button><span class="play-state" id="play-state">演示运行中</span><input id="timeline" type="range" min="0" max="1000" value="0" aria-label="播放进度"><output id="timeline-value">0%</output><select id="speed" aria-label="播放速度"><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option></select></div><div id="charts" class="plot-grid"></div><div class="explain"><strong>设计提示　</strong>${htmlEscape(topic.sections['验证与评价'])}</div></div></div><section class="demo-references"><h2>参考文献与技术资料</h2>${relevant.map(value=>`<p>${htmlEscape(value).replace(/https:\/\/[^\s]+/g,url=>`<a href="${url}" target="_blank" rel="noopener">${url}</a>`)}</p>`).join('')}</section>`;
