@@ -1,3 +1,4 @@
+import {renderLuckTimeline,attachLuckTimeline} from './culture-kit.js?v=20261122-culture-r2';
 import {renderBirthDate} from './birth-date.js?v=20261121-birth';
 import {DEFAULT_LIFE,GOALS,LIFE_VERSION,normalizeLife,simulateLife,lifeActions,observationQuadrant,sanitizeLifeRecord} from './life-engine.js?v=20261121-pathways-r4';
 import {birthChart,parseCivil,GAN,ZHI} from './yi-engine.js';
@@ -49,7 +50,7 @@ export function createLifePlanner({root,esc,toast,show,onChart}){
   compute();
   show(`<section class="life-hero"><div><span class="study-eyebrow">人生轨迹 · 可行性推演</span><h3>未来有分叉，<br>选择可以被看见。</h3><p>把目标、现状与行动放进同一张图。拖一拖，看看不同走法怎样展开。</p></div><div class="life-hero-art" aria-hidden="true"><i></i><i></i><i></i><span>此刻</span></div></section>
    <section class="life-birth-summary"><div><span>本次出生排盘 · ${esc(chart.date)} ${esc(chart.time)} · 北京时间</span><strong>${chart.pillars.join('　')}</strong><small>排盘与岁运作为传统参照；下方数值情景由现实条件和行动设定生成。</small></div><button type="button" class="panel-button outline" data-life-edit-birth>修改出生信息</button><details class="life-detail"><summary>查看四柱与岁运参照</summary><div id="life-birth-result">${birthContent()}</div><p class="life-small">岁运年表为概览，交运边界须以排盘的准确交运时刻为准。</p></details></section>
-   <div class="life-layout"><details class="life-control-card" ${innerWidth>=700?'open':''}><summary>调整现状与行动<small>拖动滑块，观察轨迹变化</small></summary><form id="life-controls"><label class="life-field">我想看哪个方向<select name="goal">${Object.entries(GOALS).map(([id,g])=>`<option value="${id}" ${profile.goal===id?'selected':''}>${g.name}</option>`).join('')}</select></label>
+   ${renderLuckTimeline()}<div class="life-layout"><details class="life-control-card" ${innerWidth>=700?'open':''}><summary>调整现状与行动<small>拖动滑块，观察轨迹变化</small></summary><form id="life-controls"><label class="life-field">我想看哪个方向<select name="goal">${Object.entries(GOALS).map(([id,g])=>`<option value="${id}" ${profile.goal===id?'selected':''}>${g.name}</option>`).join('')}</select></label>
    <label class="life-field">把目标写具体一点<input name="title" maxlength="60" value="${esc(profile.title)}" placeholder="例如：完成论文初稿，或做出一份作品"></label>
    <div class="life-control-title">现在站在哪里</div>${range('起点目标推进程度','progress')}${range('目前每周投入','currentHours',0,40,1,' 小时')}${range('可支配时间上限','budget',1,40,1,' 小时')}${range('现实支持与资源','support')}${range('当前任务负荷','load')}
    <div class="life-control-title">试着换一种走法</div>${range('计划每周投入','hours',0,40,1,' 小时')}${range('能够持续执行的程度','continuity')}${range('获得有效反馈的程度','feedback')}${range('外部环境波动','uncertainty')}
@@ -63,7 +64,7 @@ export function createLifePlanner({root,esc,toast,show,onChart}){
    <section class="life-journal"><div><span class="study-eyebrow">现实反馈 · 逐月回看</span><h3>留住最初的推演，再看实际走到了哪里。</h3><p>保存计划后，补记真实投入和进展。原始曲线保留，后续曲线随记录更新。</p></div><div class="life-journal-actions"><button type="button" class="panel-button" data-life-save>保存本次计划到本机</button><button type="button" class="panel-button outline" data-life-export>下载计划备份</button><label class="life-import">导入备份<input type="file" id="life-import" accept="application/json,.json"></label></div><div id="life-record-content"></div></section>
    <details class="life-detail"><summary>研究思路与图表怎么读</summary><p>本栏借鉴压缩动力学研究中的多步轨迹、重尾扰动、候选路径与新观察修正，以及“投入变化 × 进展变化”的四象限反馈。它是面向个人规划的条件情景演示，没有把股票模型的参数或回测成绩当成人生预测证据。</p><p>现实输入为目标进度、时间预算、持续性、反馈、资源和负荷。行动影响假设下的推进速度，环境波动影响路径分散程度。保持随机样本一致，改变滑块时比较的是条件变化，而非重新抽签。原始计划保留，后续自评记录用于修正当前状态。</p><p>八字、大运和流年沿用跃渊资料与本机历法计算，作为传统文化参照，不给数值轨迹添加未经验证的吉凶权重。图中区间不是经过人生数据验证的置信区间，模拟分支占比也不表示升职、录用、收入或其他现实结果的成功率。</p></details>
    <p class="life-small">曲线是可以随行动和反馈修正的情景，不是命定结果。人生目标、记录与备份只在你主动保存时写入当前浏览器。</p><p id="life-status" class="life-feedback" role="status"></p>`);
-  renderDynamic();renderRecords();
+  attachLuckTimeline(root,chart);renderDynamic();renderRecords();
  }
  function svg(){
   const mobile=innerWidth<700,W=mobile?520:920,H=360,pad={l:45,r:20,t:28,b:38},x=m=>pad.l+m/profile.horizon*(W-pad.l-pad.r),y=v=>H-pad.b-v/100*(H-pad.t-pad.b);
